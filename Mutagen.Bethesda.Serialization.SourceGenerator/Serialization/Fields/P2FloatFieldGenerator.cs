@@ -20,7 +20,7 @@ public class P2FloatFieldGenerator : PrimitiveFieldGenerator
         string fieldAccessor, string? defaultValueAccessor, string metaAccessor, StructuredStringBuilder sb,
         CancellationToken cancel)
     {
-        sb.AppendLine($"if (!P2Float.NullableRawEqualityComparer.Equals({fieldAccessor}, {defaultValueAccessor ?? $"default({field})"})) return true;");
+        sb.AppendLine($"if (!Mutagen.Bethesda.Serialization.FloatSerialization.BitEquals({fieldAccessor}, {defaultValueAccessor ?? $"default({field})"})) return true;");
     }
 
     public override IEnumerable<string> RequiredNamespaces(

@@ -138,12 +138,12 @@ public class YamlSerializationWriterKernel : ISerializationWriterKernel<YamlWrit
 
     public void WriteFloat(YamlWritingUnit writer, string? fieldName, float? item)
     {
-        WriteString(writer, fieldName, item?.ToString(TargetCulture.English));
+        WriteString(writer, fieldName, item == null ? null : FloatSerialization.ToString(item.Value, TargetCulture.English));
     }
 
     public void WriteDouble(YamlWritingUnit writer, string? fieldName, double? item)
     {
-        WriteString(writer, fieldName, item?.ToString(TargetCulture.English));
+        WriteString(writer, fieldName, item == null ? null : FloatSerialization.ToString(item.Value, TargetCulture.English));
     }
 
     public void WriteModKey(YamlWritingUnit writer, string? fieldName, ModKey? item)
@@ -191,12 +191,12 @@ public class YamlSerializationWriterKernel : ISerializationWriterKernel<YamlWrit
 
     public void WriteP2Float(YamlWritingUnit writer, string? fieldName, P2Float? item)
     {
-        WriteString(writer, fieldName, item?.ToString(TargetCulture.English));
+        WriteString(writer, fieldName, item == null ? null : FloatSerialization.ToString(item.Value, TargetCulture.English));
     }
 
     public void WriteP3Float(YamlWritingUnit writer, string? fieldName, P3Float? item)
     {
-        WriteString(writer, fieldName, item?.ToString(TargetCulture.English));
+        WriteString(writer, fieldName, item == null ? null : FloatSerialization.ToString(item.Value, TargetCulture.English));
     }
 
     public void WriteP3UInt8(YamlWritingUnit writer, string? fieldName, P3UInt8? item)

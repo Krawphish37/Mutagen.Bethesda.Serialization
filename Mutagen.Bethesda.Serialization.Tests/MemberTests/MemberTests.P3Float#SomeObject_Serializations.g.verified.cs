@@ -61,12 +61,12 @@ internal static class SomeObject_Serialization
     {
         metaData.Cancel.ThrowIfCancellationRequested();
         if (item == null) return false;
-        if (!P3Float.NullableRawEqualityComparer.Equals(item.SomeMember0, default(Noggog.P3Float))) return true;
-        if (!P3Float.NullableRawEqualityComparer.Equals(item.SomeMember1, default(Noggog.P3Float?))) return true;
-        if (!P3Float.NullableRawEqualityComparer.Equals(item.SomeMember2, default(Nullable<Noggog.P3Float>))) return true;
-        if (!P3Float.NullableRawEqualityComparer.Equals(item.SomeMember3, Mutagen.Bethesda.Serialization.SourceGenerator.Tests.SomeObject.SomeMember3Default)) return true;
-        if (!P3Float.NullableRawEqualityComparer.Equals(item.SomeMember4, Mutagen.Bethesda.Serialization.SourceGenerator.Tests.SomeObject.SomeMember4Default)) return true;
-        if (!P3Float.NullableRawEqualityComparer.Equals(item.SomeMember5, Mutagen.Bethesda.Serialization.SourceGenerator.Tests.SomeObject.SomeMember5Default)) return true;
+        if (!Mutagen.Bethesda.Serialization.FloatSerialization.BitEquals(item.SomeMember0, default(Noggog.P3Float))) return true;
+        if (!Mutagen.Bethesda.Serialization.FloatSerialization.BitEquals(item.SomeMember1, default(Noggog.P3Float?))) return true;
+        if (!Mutagen.Bethesda.Serialization.FloatSerialization.BitEquals(item.SomeMember2, default(Nullable<Noggog.P3Float>))) return true;
+        if (!Mutagen.Bethesda.Serialization.FloatSerialization.BitEquals(item.SomeMember3, Mutagen.Bethesda.Serialization.SourceGenerator.Tests.SomeObject.SomeMember3Default)) return true;
+        if (!Mutagen.Bethesda.Serialization.FloatSerialization.BitEquals(item.SomeMember4, Mutagen.Bethesda.Serialization.SourceGenerator.Tests.SomeObject.SomeMember4Default)) return true;
+        if (!Mutagen.Bethesda.Serialization.FloatSerialization.BitEquals(item.SomeMember5, Mutagen.Bethesda.Serialization.SourceGenerator.Tests.SomeObject.SomeMember5Default)) return true;
         return false;
     }
 

@@ -229,6 +229,10 @@ public class NewtonsoftJsonSerializationWriterKernel : ISerializationWriterKerne
         {
             writer.Writer.WriteValue(string.Empty);
         }
+        else if (FloatSerialization.NeedsBitForm(item.Value))
+        {
+            writer.Writer.WriteValue(FloatSerialization.ToBitForm(item.Value));
+        }
         else
         {
             writer.Writer.WriteValue(item.Value);
@@ -242,6 +246,10 @@ public class NewtonsoftJsonSerializationWriterKernel : ISerializationWriterKerne
         if (item == null)
         {
             writer.Writer.WriteValue(string.Empty);
+        }
+        else if (FloatSerialization.NeedsBitForm(item.Value))
+        {
+            writer.Writer.WriteValue(FloatSerialization.ToBitForm(item.Value));
         }
         else
         {
@@ -347,7 +355,7 @@ public class NewtonsoftJsonSerializationWriterKernel : ISerializationWriterKerne
         }
         else
         {
-            writer.Writer.WriteValue($"{item.Value.X.ToString(TargetCulture.English)}, {item.Value.Y.ToString(TargetCulture.English)}");
+            writer.Writer.WriteValue(FloatSerialization.ToString(item.Value, TargetCulture.English));
         }
     }
 
@@ -361,7 +369,7 @@ public class NewtonsoftJsonSerializationWriterKernel : ISerializationWriterKerne
         }
         else
         {
-            writer.Writer.WriteValue($"{item.Value.X.ToString(TargetCulture.English)}, {item.Value.Y.ToString(TargetCulture.English)}, {item.Value.Z.ToString(TargetCulture.English)}");
+            writer.Writer.WriteValue(FloatSerialization.ToString(item.Value, TargetCulture.English));
         }
     }
 

@@ -67,18 +67,18 @@ internal static class SomeObject_Serialization
     {
         metaData.Cancel.ThrowIfCancellationRequested();
         if (item == null) return false;
-        if (!EqualityComparer<float>.Default.Equals(item.SomeMember0, default(float))) return true;
-        if (!EqualityComparer<Single>.Default.Equals(item.SomeMember1, default(Single))) return true;
-        if (!EqualityComparer<float?>.Default.Equals(item.SomeMember2, default(float?))) return true;
-        if (!EqualityComparer<Single?>.Default.Equals(item.SomeMember3, default(Single?))) return true;
-        if (!EqualityComparer<Nullable<float>>.Default.Equals(item.SomeMember4, default(Nullable<float>))) return true;
-        if (!EqualityComparer<Nullable<Single>>.Default.Equals(item.SomeMember5, default(Nullable<Single>))) return true;
-        if (!EqualityComparer<float>.Default.Equals(item.SomeMember6, Mutagen.Bethesda.Serialization.SourceGenerator.Tests.SomeObject.SomeMember6Default)) return true;
-        if (!EqualityComparer<Single>.Default.Equals(item.SomeMember7, Mutagen.Bethesda.Serialization.SourceGenerator.Tests.SomeObject.SomeMember7Default)) return true;
-        if (!EqualityComparer<float?>.Default.Equals(item.SomeMember8, Mutagen.Bethesda.Serialization.SourceGenerator.Tests.SomeObject.SomeMember8Default)) return true;
-        if (!EqualityComparer<Single?>.Default.Equals(item.SomeMember9, Mutagen.Bethesda.Serialization.SourceGenerator.Tests.SomeObject.SomeMember9Default)) return true;
-        if (!EqualityComparer<Nullable<float>>.Default.Equals(item.SomeMember10, Mutagen.Bethesda.Serialization.SourceGenerator.Tests.SomeObject.SomeMember10Default)) return true;
-        if (!EqualityComparer<Nullable<Single>>.Default.Equals(item.SomeMember11, Mutagen.Bethesda.Serialization.SourceGenerator.Tests.SomeObject.SomeMember11Default)) return true;
+        if (!Mutagen.Bethesda.Serialization.FloatSerialization.BitEquals(item.SomeMember0, default(float))) return true;
+        if (!Mutagen.Bethesda.Serialization.FloatSerialization.BitEquals(item.SomeMember1, default(Single))) return true;
+        if (!Mutagen.Bethesda.Serialization.FloatSerialization.BitEquals(item.SomeMember2, default(float?))) return true;
+        if (!Mutagen.Bethesda.Serialization.FloatSerialization.BitEquals(item.SomeMember3, default(Single?))) return true;
+        if (!Mutagen.Bethesda.Serialization.FloatSerialization.BitEquals(item.SomeMember4, default(Nullable<float>))) return true;
+        if (!Mutagen.Bethesda.Serialization.FloatSerialization.BitEquals(item.SomeMember5, default(Nullable<Single>))) return true;
+        if (!Mutagen.Bethesda.Serialization.FloatSerialization.BitEquals(item.SomeMember6, Mutagen.Bethesda.Serialization.SourceGenerator.Tests.SomeObject.SomeMember6Default)) return true;
+        if (!Mutagen.Bethesda.Serialization.FloatSerialization.BitEquals(item.SomeMember7, Mutagen.Bethesda.Serialization.SourceGenerator.Tests.SomeObject.SomeMember7Default)) return true;
+        if (!Mutagen.Bethesda.Serialization.FloatSerialization.BitEquals(item.SomeMember8, Mutagen.Bethesda.Serialization.SourceGenerator.Tests.SomeObject.SomeMember8Default)) return true;
+        if (!Mutagen.Bethesda.Serialization.FloatSerialization.BitEquals(item.SomeMember9, Mutagen.Bethesda.Serialization.SourceGenerator.Tests.SomeObject.SomeMember9Default)) return true;
+        if (!Mutagen.Bethesda.Serialization.FloatSerialization.BitEquals(item.SomeMember10, Mutagen.Bethesda.Serialization.SourceGenerator.Tests.SomeObject.SomeMember10Default)) return true;
+        if (!Mutagen.Bethesda.Serialization.FloatSerialization.BitEquals(item.SomeMember11, Mutagen.Bethesda.Serialization.SourceGenerator.Tests.SomeObject.SomeMember11Default)) return true;
         return false;
     }
 

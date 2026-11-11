@@ -320,7 +320,7 @@ public class NewtonsoftJsonSerializationReaderKernel : ISerializationReaderKerne
             case long l:
                 return (float)l;
             case string s:
-                return float.Parse(s);
+                return FloatSerialization.ParseFloat(s);
             default:
                 throw new NotImplementedException();
         }
@@ -345,7 +345,7 @@ public class NewtonsoftJsonSerializationReaderKernel : ISerializationReaderKerne
             case long l:
                 return (double)l;
             case string s:
-                return double.Parse(s);
+                return FloatSerialization.ParseDouble(s);
             default:
                 throw new NotImplementedException();
         }
@@ -429,7 +429,7 @@ public class NewtonsoftJsonSerializationReaderKernel : ISerializationReaderKerne
         SkipPropertyName(reader);
         var str = (string?)reader.Reader.Value!;
         if (str.IsNullOrEmpty()) return null;
-        if (P2Float.TryParse(str, out var pt, TargetCulture.English))
+        if (FloatSerialization.TryParse(str, out P2Float pt, TargetCulture.English))
         {
             return pt;
         }
@@ -442,7 +442,7 @@ public class NewtonsoftJsonSerializationReaderKernel : ISerializationReaderKerne
         SkipPropertyName(reader);
         var str = (string?)reader.Reader.Value!;
         if (str.IsNullOrEmpty()) return null;
-        if (P3Float.TryParse(str, out var pt, TargetCulture.English))
+        if (FloatSerialization.TryParse(str, out P3Float pt, TargetCulture.English))
         {
             return pt;
         }

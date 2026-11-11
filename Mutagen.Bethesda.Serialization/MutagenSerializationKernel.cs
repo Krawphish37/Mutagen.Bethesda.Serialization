@@ -96,13 +96,13 @@ public class MutagenSerializationWriterKernel<TKernel, TWriterObject> : IExcepti
     
     public void WriteFloat(TWriterObject writer, string? fieldName, float? item, float? defaultVal, bool checkDefaults = true)
     {
-        if (checkDefaults && EqualityComparer<float?>.Default.Equals(item, defaultVal)) return;
+        if (checkDefaults && FloatSerialization.BitEquals(item, defaultVal)) return;
         _kernel.WriteFloat(writer, fieldName, item);
     }
     
     public void WriteDouble(TWriterObject writer, string? fieldName, double? item, double? defaultVal, bool checkDefaults = true)
     {
-        if (checkDefaults && EqualityComparer<double?>.Default.Equals(item, defaultVal)) return;
+        if (checkDefaults && FloatSerialization.BitEquals(item, defaultVal)) return;
         _kernel.WriteDouble(writer, fieldName, item);
     }
     
@@ -144,13 +144,13 @@ public class MutagenSerializationWriterKernel<TKernel, TWriterObject> : IExcepti
     
     public void WriteP2Float(TWriterObject writer, string? fieldName, P2Float? item, P2Float? defaultVal, bool checkDefaults = true)
     {
-        if (checkDefaults && P2Float.NullableRawEqualityComparer.Equals(item, defaultVal)) return;
+        if (checkDefaults && FloatSerialization.BitEquals(item, defaultVal)) return;
         _kernel.WriteP2Float(writer, fieldName, item);
     }
     
     public void WriteP3Float(TWriterObject writer, string? fieldName, P3Float? item, P3Float? defaultVal, bool checkDefaults = true)
     {
-        if (checkDefaults && P3Float.NullableRawEqualityComparer.Equals(item, defaultVal)) return;
+        if (checkDefaults && FloatSerialization.BitEquals(item, defaultVal)) return;
         _kernel.WriteP3Float(writer, fieldName, item);
     }
     

@@ -282,14 +282,14 @@ public class YamlSerializationReaderKernel : ISerializationReaderKernel<YamlRead
     {
         var str = ReadString(reader);
         if (str.IsNullOrWhitespace()) return null;
-        return float.Parse(str, TargetCulture.English);
+        return FloatSerialization.ParseFloat(str, TargetCulture.English);
     }
 
     public double? ReadDouble(YamlReadingUnit reader)
     {
         var str = ReadString(reader);
         if (str.IsNullOrWhitespace()) return null;
-        return double.Parse(str, TargetCulture.English);
+        return FloatSerialization.ParseDouble(str, TargetCulture.English);
     }
 
     public ModKey? ReadModKey(YamlReadingUnit reader)
@@ -364,7 +364,7 @@ public class YamlSerializationReaderKernel : ISerializationReaderKernel<YamlRead
     {
         var str = ReadString(reader);
         if (str.IsNullOrWhitespace()) return null;
-        if (P2Float.TryParse(str, out var pt, TargetCulture.English))
+        if (FloatSerialization.TryParse(str, out P2Float pt, TargetCulture.English))
         {
             return pt;
         }
@@ -376,7 +376,7 @@ public class YamlSerializationReaderKernel : ISerializationReaderKernel<YamlRead
     {
         var str = ReadString(reader);
         if (str.IsNullOrWhitespace()) return null;
-        if (P3Float.TryParse(str, out var pt, TargetCulture.English))
+        if (FloatSerialization.TryParse(str, out P3Float pt, TargetCulture.English))
         {
             return pt;
         }
