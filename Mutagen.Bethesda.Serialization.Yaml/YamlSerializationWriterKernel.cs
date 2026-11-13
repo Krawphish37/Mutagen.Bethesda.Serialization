@@ -289,7 +289,8 @@ public class YamlSerializationWriterKernel : ISerializationWriterKernel<YamlWrit
         }
         else
         {
-            writer.WriteScalar(item.Value.Length == 0 ? "[]" : $"0x{Convert.ToHexString(item.Value)}");
+            // One form for bytes: "0x" and the hex digits, "0x" alone when there are none ("[]" is still read)
+            writer.WriteScalar($"0x{Convert.ToHexString(item.Value)}");
         }
     }
 

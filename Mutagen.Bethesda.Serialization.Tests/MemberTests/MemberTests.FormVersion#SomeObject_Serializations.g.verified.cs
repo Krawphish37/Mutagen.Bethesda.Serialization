@@ -47,7 +47,7 @@ internal static class SomeObject_Serialization
         where TWriteObject : IContainStreamPackage
     {
         metaData.Cancel.ThrowIfCancellationRequested();
-        kernel.WriteUInt16(writer, "FormVersion", item.FormVersion, metaData.Constants.DefaultFormVersion ?? 0);
+        kernel.WriteUInt16(writer, "FormVersion", item.FormVersion, metaData.Constants.DefaultFormVersion ?? 0, checkDefaults: false);
     }
 
     public static bool HasSerializationItems(

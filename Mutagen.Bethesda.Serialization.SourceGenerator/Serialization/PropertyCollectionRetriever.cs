@@ -20,6 +20,11 @@ public record PropertyMetadata(IPropertySymbol Property, ISerializationForFieldG
 {
     public IFieldSymbol? Default { get; set; }
 
+    /// <summary>
+    /// Written even when it equals its default (the default still fills it in when reading a file without it)
+    /// </summary>
+    public bool AlwaysWrite { get; set; }
+
     private string? _defaultString;
     public string? DefaultString
     {
@@ -103,6 +108,9 @@ public class PropertyCollectionRetriever
         if (collection.Lookup.TryGetValue("FormVersion", out var prop))
         {
             prop.DefaultString = $"metaData.Constants.DefaultFormVersion ?? 0";
+            // A record's form version is file data, not a setting: always written, so a reader of the output
+            // doesn't have to know the game's default (576 for Starfield) to tell it from a missing value
+            prop.AlwaysWrite = true;
         }
     }
 }

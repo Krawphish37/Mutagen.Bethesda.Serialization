@@ -582,7 +582,8 @@ public class SerializationForObjectGenerator
                         defaultValueAccessor: prop.DefaultString,
                         prop.Generator,
                         sb: sbInternal,
-                        cancel: compilation.Context.CancellationToken);
+                        cancel: compilation.Context.CancellationToken,
+                        alwaysWrite: prop.AlwaysWrite);
                 });
             }
 

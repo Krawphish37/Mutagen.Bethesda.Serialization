@@ -525,7 +525,8 @@ public class NewtonsoftJsonSerializationWriterKernel : ISerializationWriterKerne
         }
         else
         {
-            writer.Writer.WriteValue(item.Value.Length == 0 ? "[]" : $"0x{Convert.ToHexString(item.Value)}");
+            // One form for bytes: "0x" and the hex digits, "0x" alone when there are none ("[]" is still read)
+            writer.Writer.WriteValue($"0x{Convert.ToHexString(item.Value)}");
         }
     }
 

@@ -70,7 +70,8 @@ public class SerializationFieldGenerator
         string? defaultValueAccessor,
         ISerializationForFieldGenerator? gen,
         StructuredStringBuilder sb,
-        CancellationToken cancel)
+        CancellationToken cancel,
+        bool alwaysWrite = false)
     {
         cancel.ThrowIfCancellationRequested();
         if (gen != null)
@@ -84,7 +85,8 @@ public class SerializationFieldGenerator
                 writerAccessor,
                 "kernel",
                 "metaData",
-                insideCollection: false,
+                // inside a collection a value is written whatever it is (checkDefaults: false)
+                insideCollection: alwaysWrite,
                 sb,
                 cancel);
         }

@@ -160,6 +160,25 @@ public abstract class AFloatBitsTest<TWriterKernel, TWriter, TReaderKernel, TRea
     }
 
     protected abstract string OldP3FloatText { get; }
+
+    // Bytes: empty is now written "0x" (one form with "0x0102..."); files written before say "[]", which still reads
+    [Fact]
+    public void OldFormat_EmptyBytes_StillReads()
+    {
+        var ret = new Dictionary<string, byte[]?>();
+        using var mem = new MemoryStream(Encoding.UTF8.GetBytes(OldBytesText));
+        var readerObj = ReaderKernel.GetNewObject(GetStreamPackage(mem));
+        using var disp = readerObj as IDisposable;
+        while (ReaderKernel.TryGetNextField(readerObj, out var name))
+        {
+            ret[name] = ReaderKernel.ReadBytes(readerObj)?.ToArray();
+        }
+        ret["Old"].ShouldBe(Array.Empty<byte>());
+        ret["New"].ShouldBe(Array.Empty<byte>());
+        ret["Some"].ShouldBe(new byte[] { 1, 0xFF });
+    }
+
+    protected abstract string OldBytesText { get; }
 }
 
 public class NewtonsoftFloatBitsTests : AFloatBitsTest<
@@ -171,6 +190,9 @@ public class NewtonsoftFloatBitsTests : AFloatBitsTest<
 
     protected override string OldP3FloatText =>
         "{\n  \"P\": \"1, -3, 0\",\n  \"Q\": \"NaN, NaN, NaN\"\n}";
+
+    protected override string OldBytesText =>
+        "{\n  \"Old\": \"[]\",\n  \"New\": \"0x\",\n  \"Some\": \"0x01FF\"\n}";
 }
 
 public class YamlFloatBitsTests : AFloatBitsTest<
@@ -182,4 +204,7 @@ public class YamlFloatBitsTests : AFloatBitsTest<
 
     protected override string OldP3FloatText =>
         "P: 1, -3, 0\nQ: NaN, NaN, NaN\n";
+
+    protected override string OldBytesText =>
+        "Old: '[]'\nNew: 0x\nSome: 0x01FF\n";
 }
