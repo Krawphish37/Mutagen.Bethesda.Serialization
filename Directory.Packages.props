@@ -15,7 +15,7 @@
     </PackageVersion>
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.3.0" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.7.0" />
-    <PackageVersion Include="Mutagen.Bethesda.Core" Version="0.54.0" />
+    <PackageVersion Include="Mutagen.Bethesda.Core" Version="0.55.0-fixes.13" />
     <PackageVersion Include="Mutagen.Bethesda.Fallout4" Version="0.54.0" />
     <PackageVersion Include="Mutagen.Bethesda.Skyrim" Version="0.54.0" />
     <PackageVersion Include="Mutagen.Bethesda.Starfield" Version="0.54.0" />
