@@ -1,6 +1,7 @@
 ﻿{
   "FormKey": "123456:Fallout4.esm",
   "EditorID": "TestEdid",
+  "FormVersion": 131,
   "Level": {
     "MutagenObjectType": "NpcLevel"
   },

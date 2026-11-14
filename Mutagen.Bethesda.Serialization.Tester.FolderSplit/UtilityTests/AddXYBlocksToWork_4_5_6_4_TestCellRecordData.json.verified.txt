@@ -1,4 +1,5 @@
 ﻿{
   "FormKey": "000001:modKey.esp",
-  "EditorID": "TestCell"
+  "EditorID": "TestCell",
+  "FormVersion": 131
 }
