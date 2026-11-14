@@ -25,12 +25,29 @@ public class SerializationForObjectGenerator
     /// an older Mutagen nothing is generated for it.
     /// </summary>
     private static bool CarriesHeaderFormIdAsStored(CompilationUnit compilation, LoquiTypeSet obj)
+        => HasRoundTripPair(compilation, obj, HeaderFormIdAsStoredName);
+
+    /// <summary>
+    /// The field that carries the FormIDs in a record's subrecords stored in another form than Mutagen writes (a
+    /// Small/Medium plugin's own links with its full index, master indices past the list): RoundTripMixIn's opaque
+    /// value, written only when there is one (C210)
+    /// </summary>
+    private const string OwnLinkFormsAsStoredName = "OwnLinkFormsAsStored";
+
+    private static bool CarriesOwnLinkFormsAsStored(CompilationUnit compilation, LoquiTypeSet obj)
+        => HasRoundTripPair(compilation, obj, OwnLinkFormsAsStoredName);
+
+    /// <summary>
+    /// On the major record base, whether the Mutagen the code is generated against has RoundTripMixIn.Get{name} and
+    /// Set{name}
+    /// </summary>
+    private static bool HasRoundTripPair(CompilationUnit compilation, LoquiTypeSet obj, string name)
     {
         if (obj.Getter?.Name != "IMajorRecordGetter") return false;
         var mixIn = compilation.Compilation.GetTypeByMetadataName("Mutagen.Bethesda.Plugins.Records.RoundTripMixIn");
         return mixIn != null
-            && mixIn.GetMembers("GetHeaderFormIdAsStored").Length > 0
-            && mixIn.GetMembers("SetHeaderFormIdAsStored").Length > 0;
+            && mixIn.GetMembers("Get" + name).Length > 0
+            && mixIn.GetMembers("Set" + name).Length > 0;
     }
 
     private readonly LoquiNameRetriever _nameRetriever;
@@ -387,6 +404,17 @@ public class SerializationForObjectGenerator
                     }
                 }
 
+                if (CarriesOwnLinkFormsAsStored(compilation, obj))
+                {
+                    generatedForProperty = true;
+                    sb.AppendLine($"case \"{OwnLinkFormsAsStoredName}\":");
+                    using (sb.IncreaseDepth())
+                    {
+                        sb.AppendLine("Mutagen.Bethesda.Plugins.Records.RoundTripMixIn.SetOwnLinkFormsAsStored(obj, kernel.ReadString(reader));");
+                        sb.AppendLine("break;");
+                    }
+                }
+
                 if (!generatedForProperty && !alwaysGenerate)
                 {
                     return false;
@@ -629,6 +657,15 @@ public class SerializationForObjectGenerator
                 using (sbInternal.CurlyBrace())
                 {
                     sbInternal.AppendLine($"kernel.WriteString(writer, \"{HeaderFormIdAsStoredName}\", headerFormIdAsStored.ToString(\"X8\"), default, checkDefaults: false);");
+                }
+            }
+
+            if (CarriesOwnLinkFormsAsStored(compilation, obj))
+            {
+                sbInternal.AppendLine("if (Mutagen.Bethesda.Plugins.Records.RoundTripMixIn.GetOwnLinkFormsAsStored(item) is { } ownLinkFormsAsStored)");
+                using (sbInternal.CurlyBrace())
+                {
+                    sbInternal.AppendLine($"kernel.WriteString(writer, \"{OwnLinkFormsAsStoredName}\", ownLinkFormsAsStored, default, checkDefaults: false);");
                 }
             }
 
