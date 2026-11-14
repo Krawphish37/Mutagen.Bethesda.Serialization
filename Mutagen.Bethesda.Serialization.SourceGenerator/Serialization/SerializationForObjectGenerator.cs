@@ -38,6 +38,29 @@ public class SerializationForObjectGenerator
         => HasRoundTripPair(compilation, obj, OwnLinkFormsAsStoredName);
 
     /// <summary>
+    /// The field that carries the order a record's subrecords had in its file, when it differs from Mutagen's
+    /// (RoundTripMixIn.GetSubrecordOrder's opaque value), written only when there is one (C211)
+    /// </summary>
+    private const string SubrecordOrderName = "SubrecordOrder";
+
+    private static bool CarriesSubrecordOrder(CompilationUnit compilation, LoquiTypeSet obj)
+        => HasRoundTripPair(compilation, obj, SubrecordOrderName);
+
+    /// <summary>
+    /// On a mod, whether the Mutagen the code is generated against keeps what a rebuilt mod needs to write back like its
+    /// file: the own-FormID style, the header stats baseline and the overridden-forms baseline (RoundTripMixIn; C211).
+    /// Each is written only when the mod has it.
+    /// </summary>
+    private static bool CarriesModRoundTripNotes(CompilationUnit compilation, bool isMod)
+    {
+        if (!isMod) return false;
+        var mixIn = compilation.Compilation.GetTypeByMetadataName("Mutagen.Bethesda.Plugins.Records.RoundTripMixIn");
+        return mixIn != null
+            && new[] { "OwnFormIdStyle", "HeaderStatsBaseline", "OverriddenFormsBaseline" }
+                .All(n => mixIn.GetMembers("Get" + n).Length > 0 && mixIn.GetMembers("Set" + n).Length > 0);
+    }
+
+    /// <summary>
     /// On the major record base, whether the Mutagen the code is generated against has RoundTripMixIn.Get{name} and
     /// Set{name}
     /// </summary>
@@ -415,6 +438,44 @@ public class SerializationForObjectGenerator
                     }
                 }
 
+                if (CarriesSubrecordOrder(compilation, obj))
+                {
+                    generatedForProperty = true;
+                    sb.AppendLine($"case \"{SubrecordOrderName}\":");
+                    using (sb.IncreaseDepth())
+                    {
+                        sb.AppendLine("Mutagen.Bethesda.Plugins.Records.RoundTripMixIn.SetSubrecordOrder(obj, kernel.ReadString(reader));");
+                        sb.AppendLine("break;");
+                    }
+                }
+
+                if (CarriesModRoundTripNotes(compilation, isMod))
+                {
+                    generatedForProperty = true;
+                    sb.AppendLine("case \"OwnFormIdStyle\":");
+                    using (sb.IncreaseDepth())
+                    {
+                        sb.AppendLine("if (kernel.ReadString(reader) is { } ownFormIdStyle)");
+                        using (sb.CurlyBrace())
+                        {
+                            sb.AppendLine("Mutagen.Bethesda.Plugins.Records.RoundTripMixIn.SetOwnFormIdStyle(obj, Enum.Parse<Mutagen.Bethesda.Plugins.Records.ModOwnFormIdStyle>(ownFormIdStyle));");
+                        }
+                        sb.AppendLine("break;");
+                    }
+                    sb.AppendLine("case \"HeaderStatsBaseline\":");
+                    using (sb.IncreaseDepth())
+                    {
+                        sb.AppendLine("Mutagen.Bethesda.Plugins.Records.RoundTripMixIn.SetHeaderStatsBaseline(obj, Mutagen.Bethesda.Serialization.Utility.RoundTripNotesHelper.HeaderStatsFromString(kernel.ReadString(reader)));");
+                        sb.AppendLine("break;");
+                    }
+                    sb.AppendLine("case \"OverriddenFormsBaseline\":");
+                    using (sb.IncreaseDepth())
+                    {
+                        sb.AppendLine("Mutagen.Bethesda.Plugins.Records.RoundTripMixIn.SetOverriddenFormsBaseline(obj, Mutagen.Bethesda.Serialization.Utility.RoundTripNotesHelper.FormKeysFromString(kernel.ReadString(reader)));");
+                        sb.AppendLine("break;");
+                    }
+                }
+
                 if (!generatedForProperty && !alwaysGenerate)
                 {
                     return false;
@@ -666,6 +727,34 @@ public class SerializationForObjectGenerator
                 using (sbInternal.CurlyBrace())
                 {
                     sbInternal.AppendLine($"kernel.WriteString(writer, \"{OwnLinkFormsAsStoredName}\", ownLinkFormsAsStored, default, checkDefaults: false);");
+                }
+            }
+
+            if (CarriesSubrecordOrder(compilation, obj))
+            {
+                sbInternal.AppendLine("if (Mutagen.Bethesda.Plugins.Records.RoundTripMixIn.GetSubrecordOrder(item) is { } subrecordOrder)");
+                using (sbInternal.CurlyBrace())
+                {
+                    sbInternal.AppendLine($"kernel.WriteString(writer, \"{SubrecordOrderName}\", subrecordOrder, default, checkDefaults: false);");
+                }
+            }
+
+            if (CarriesModRoundTripNotes(compilation, isMod))
+            {
+                sbInternal.AppendLine("if (Mutagen.Bethesda.Plugins.Records.RoundTripMixIn.GetOwnFormIdStyle(item) is var ownFormIdStyle && ownFormIdStyle != Mutagen.Bethesda.Plugins.Records.ModOwnFormIdStyle.Default)");
+                using (sbInternal.CurlyBrace())
+                {
+                    sbInternal.AppendLine("kernel.WriteString(writer, \"OwnFormIdStyle\", ownFormIdStyle.ToString(), default, checkDefaults: false);");
+                }
+                sbInternal.AppendLine("if (Mutagen.Bethesda.Serialization.Utility.RoundTripNotesHelper.HeaderStatsToString(Mutagen.Bethesda.Plugins.Records.RoundTripMixIn.GetHeaderStatsBaseline(item)) is { } headerStatsBaseline)");
+                using (sbInternal.CurlyBrace())
+                {
+                    sbInternal.AppendLine("kernel.WriteString(writer, \"HeaderStatsBaseline\", headerStatsBaseline, default, checkDefaults: false);");
+                }
+                sbInternal.AppendLine("if (Mutagen.Bethesda.Serialization.Utility.RoundTripNotesHelper.FormKeysToString(Mutagen.Bethesda.Plugins.Records.RoundTripMixIn.GetOverriddenFormsBaseline(item)) is { } overriddenFormsBaseline)");
+                using (sbInternal.CurlyBrace())
+                {
+                    sbInternal.AppendLine("kernel.WriteString(writer, \"OverriddenFormsBaseline\", overriddenFormsBaseline, default, checkDefaults: false);");
                 }
             }
 
