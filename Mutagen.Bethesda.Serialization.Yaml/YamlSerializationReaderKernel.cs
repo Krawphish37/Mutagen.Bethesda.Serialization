@@ -469,6 +469,9 @@ public class YamlSerializationReaderKernel : ISerializationReaderKernel<YamlRead
         List<KeyValuePair<Language, string?>>? pairs = null;
         Language? language = null;
         string? str = null;
+        string? stringsKey = null;
+        string? stringsSource = null;
+        string? stringsPlugin = null;
         int objCount = 1;
         bool stop = false;
         bool inArray = false;
@@ -515,6 +518,21 @@ public class YamlSerializationReaderKernel : ISerializationReaderKernel<YamlRead
                     {
                         inArray = true;
                     }
+                    else if (propName == StringsKeyNote.KeyName
+                             && reader.Parser.Accept<Scalar>(out var keyVal))
+                    {
+                        stringsKey = keyVal.Value;
+                    }
+                    else if (propName == StringsKeyNote.SourceName
+                             && reader.Parser.Accept<Scalar>(out var sourceVal))
+                    {
+                        stringsSource = sourceVal.Value;
+                    }
+                    else if (propName == StringsKeyNote.PluginName
+                             && reader.Parser.Accept<Scalar>(out var pluginVal))
+                    {
+                        stringsPlugin = pluginVal.Value;
+                    }
                     break;
                 case MappingEnd:
                     if (language != null)
@@ -541,7 +559,7 @@ public class YamlSerializationReaderKernel : ISerializationReaderKernel<YamlRead
             reader.Parser.MoveNext();
         }
 
-        if (pairs == null && mainString == null && targetLanguage == null) return null;
+        if (pairs == null && mainString == null && targetLanguage == null && stringsKey == null) return null;
 
         var ret = new TranslatedString(targetLanguage ?? TranslatedString.DefaultLanguage);
         if (pairs != null)
@@ -555,6 +573,7 @@ public class YamlSerializationReaderKernel : ISerializationReaderKernel<YamlRead
         {
             ret.String = mainString;
         }
+        StringsKeyNote.Set(ret, stringsKey, stringsSource, stringsPlugin);
 
         return ret;
     }

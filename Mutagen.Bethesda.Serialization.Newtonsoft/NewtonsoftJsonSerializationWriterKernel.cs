@@ -513,6 +513,16 @@ public class NewtonsoftJsonSerializationWriterKernel : ISerializationWriterKerne
             }
             writer.Writer.WriteEndArray();
         }
+        // The text's ID in its plugin's .strings tables, so a localized plugin rebuilt from JSON keeps it (C214)
+        if (StringsKeyNote.TryGet(item, out var stringsKey, out var stringsSource, out var stringsPlugin))
+        {
+            writer.Writer.WritePropertyName(StringsKeyNote.KeyName);
+            writer.Writer.WriteValue(stringsKey);
+            writer.Writer.WritePropertyName(StringsKeyNote.SourceName);
+            writer.Writer.WriteValue(stringsSource);
+            writer.Writer.WritePropertyName(StringsKeyNote.PluginName);
+            writer.Writer.WriteValue(stringsPlugin);
+        }
         writer.Writer.WriteEndObject();
     }
 

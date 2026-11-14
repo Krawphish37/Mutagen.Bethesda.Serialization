@@ -878,6 +878,34 @@ public abstract class AKernelTest<TWriterKernel, TWriter, TReaderKernel, TReader
                 new KeyValuePair<Language, string>(Language.French, "Multi\r\nLine")));
     }
 
+    private static TranslatedString WithStringsKey(TranslatedString str, uint key, StringsSource source, string plugin)
+    {
+        str.SetStringsKey(key, source, Plugins.ModKey.FromNameAndExtension(plugin));
+        return str;
+    }
+
+    // C214: a text's ID in its plugin's .strings tables travels with it
+    [Fact]
+    public async Task TranslatedStringWithStringsKey()
+    {
+        await DoPrimitiveTest<ITranslatedStringGetter?>(
+            "TranslatedStringWithStringsKey",
+            (k, w, name, item, def) => k.WriteTranslatedString(w, name, item, def),
+            (k, r) => k.ReadTranslatedString(r),
+            equality: (l, r) =>
+                EqualityComparer<ITranslatedStringGetter?>.Default.Equals(l, r)
+                && (l as TranslatedString)?.StringsKey == (r as TranslatedString)?.StringsKey
+                && (l as TranslatedString)?.StringsKeySource == (r as TranslatedString)?.StringsKeySource
+                && (l as TranslatedString)?.StringsKeyPlugin == (r as TranslatedString)?.StringsKeyPlugin,
+            WithStringsKey(new TranslatedString(Language.English, "Hello"), 0x1234, StringsSource.Normal, "sfta01.esm"),
+            WithStringsKey(new TranslatedString(Language.English, "Hello"), 0x1234, StringsSource.Normal, "sfta01.esm"),
+            WithStringsKey(new TranslatedString(Language.English, default(string?)), 7, StringsSource.IL, "Starfield.esm"),
+            WithStringsKey(new TranslatedString(Language.Spanish,
+                new KeyValuePair<Language, string>(Language.English, "Hello"),
+                new KeyValuePair<Language, string>(Language.French, "Bonjour")), uint.MaxValue, StringsSource.DL, "Some Mod.esp"),
+            new TranslatedString(Language.English, "No key"));
+    }
+
     [Fact]
     public async Task Bytes()
     {

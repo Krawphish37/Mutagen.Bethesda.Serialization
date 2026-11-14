@@ -527,6 +527,9 @@ public class NewtonsoftJsonSerializationReaderKernel : ISerializationReaderKerne
         List<KeyValuePair<Language, string?>>? pairs = null;
         Language? language = null;
         string? str = null;
+        string? stringsKey = null;
+        string? stringsSource = null;
+        string? stringsPlugin = null;
         int objCount = 1;
         bool stop = false;
         bool inArray = false;
@@ -566,6 +569,18 @@ public class NewtonsoftJsonSerializationReaderKernel : ISerializationReaderKerne
                     {
                         startingValues = true;
                     }
+                    else if (propName == StringsKeyNote.KeyName)
+                    {
+                        stringsKey = reader.Reader.ReadAsString();
+                    }
+                    else if (propName == StringsKeyNote.SourceName)
+                    {
+                        stringsSource = reader.Reader.ReadAsString();
+                    }
+                    else if (propName == StringsKeyNote.PluginName)
+                    {
+                        stringsPlugin = reader.Reader.ReadAsString();
+                    }
                     break;
                 case JsonToken.EndObject:
                     if (language != null)
@@ -596,7 +611,7 @@ public class NewtonsoftJsonSerializationReaderKernel : ISerializationReaderKerne
             }
         }
 
-        if (targetLanguage == null && pairs == null && mainString == null)
+        if (targetLanguage == null && pairs == null && mainString == null && stringsKey == null)
         {
             return null;
         }
@@ -613,6 +628,7 @@ public class NewtonsoftJsonSerializationReaderKernel : ISerializationReaderKerne
         {
             ret.String = mainString;
         }
+        StringsKeyNote.Set(ret, stringsKey, stringsSource, stringsPlugin);
 
         return ret;
     }

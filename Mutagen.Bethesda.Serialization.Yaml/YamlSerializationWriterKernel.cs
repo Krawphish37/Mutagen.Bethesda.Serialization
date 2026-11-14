@@ -277,6 +277,16 @@ public class YamlSerializationWriterKernel : ISerializationWriterKernel<YamlWrit
             }
             writer.Emitter.Emit(new SequenceEnd());
         }
+        // The text's ID in its plugin's .strings tables, so a localized plugin rebuilt from YAML keeps it (C214)
+        if (StringsKeyNote.TryGet(item, out var stringsKey, out var stringsSource, out var stringsPlugin))
+        {
+            writer.WriteScalar(StringsKeyNote.KeyName);
+            writer.WriteScalar(stringsKey.ToString(CultureInfo.InvariantCulture));
+            writer.WriteScalar(StringsKeyNote.SourceName);
+            writer.WriteScalar(stringsSource);
+            writer.WriteScalar(StringsKeyNote.PluginName);
+            writer.WriteScalar(stringsPlugin);
+        }
         writer.Emitter.Emit(new MappingEnd());
     }
 

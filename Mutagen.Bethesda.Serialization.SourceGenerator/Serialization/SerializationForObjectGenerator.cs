@@ -47,6 +47,58 @@ public class SerializationForObjectGenerator
         => HasRoundTripPair(compilation, obj, SubrecordOrderName);
 
     /// <summary>
+    /// The field that carries a compressed record's compressed bytes as read, base64, written only when Mutagen's own
+    /// compression of the record wouldn't give those bytes again (FileLayoutMixIn.GetOriginalCompressedDataIfNotReproduced;
+    /// C213): a record compressed with another encoder or level. A record the Creation Kit compressed is usually given
+    /// back by Mutagen's compression and carries nothing.
+    /// </summary>
+    private const string OriginalCompressedDataName = "OriginalCompressedData";
+
+    private static bool CarriesOriginalCompressedData(CompilationUnit compilation, LoquiTypeSet obj)
+        => obj.Getter?.Name == "IMajorRecordGetter"
+           && HasFileLayoutMembers(compilation, "GetOriginalCompressedDataIfNotReproduced", "SetOriginalCompressedData");
+
+    /// <summary>
+    /// The mod field that carries the empty top-level groups its file had (FileLayoutMixIn.GetEmptyTopLevelGroups'
+    /// opaque value), written only when there are some (C215)
+    /// </summary>
+    private const string EmptyTopLevelGroupsName = "EmptyTopLevelGroups";
+
+    private static bool CarriesEmptyTopLevelGroups(CompilationUnit compilation, bool isMod)
+        => isMod && HasFileLayoutMembers(compilation, "GetEmptyTopLevelGroups", "SetEmptyTopLevelGroups");
+
+    /// <summary>
+    /// The cell field that carries the layout its children group was read with, when it differs from Mutagen's (which
+    /// of the persistent and temporary groups came first, where the navmeshes sat; CellMixIn.GetChildGroupLayout's
+    /// opaque value), written only when there is one (sfta01.esm: the cells that put the temporary group first)
+    /// </summary>
+    private const string ChildGroupLayoutName = "ChildGroupLayout";
+
+    /// <summary>
+    /// On a cell, the CellMixIn of its game when that has GetChildGroupLayout and SetChildGroupLayout (Starfield)
+    /// </summary>
+    private static string? CellChildGroupLayoutMixIn(CompilationUnit compilation, LoquiTypeSet obj)
+    {
+        if (obj.Getter?.Name != "ICellGetter" || obj.Getter.ContainingNamespace is not { } ns) return null;
+        var name = ns.ToDisplayString() + ".CellMixIn";
+        var mixIn = compilation.Compilation.GetTypeByMetadataName(name);
+        return mixIn != null
+               && mixIn.GetMembers("GetChildGroupLayout").Length > 0
+               && mixIn.GetMembers("SetChildGroupLayout").Length > 0
+            ? name
+            : null;
+    }
+
+    /// <summary>
+    /// Whether the Mutagen the code is generated against has all the given FileLayoutMixIn methods
+    /// </summary>
+    private static bool HasFileLayoutMembers(CompilationUnit compilation, params string[] names)
+    {
+        var mixIn = compilation.Compilation.GetTypeByMetadataName("Mutagen.Bethesda.Plugins.Records.FileLayoutMixIn");
+        return mixIn != null && names.All(n => mixIn.GetMembers(n).Length > 0);
+    }
+
+    /// <summary>
     /// On a mod, whether the Mutagen the code is generated against keeps what a rebuilt mod needs to write back like its
     /// file: the own-FormID style, the header stats baseline and the overridden-forms baseline (RoundTripMixIn; C211).
     /// Each is written only when the mod has it.
@@ -449,6 +501,43 @@ public class SerializationForObjectGenerator
                     }
                 }
 
+                if (CarriesOriginalCompressedData(compilation, obj))
+                {
+                    generatedForProperty = true;
+                    sb.AppendLine($"case \"{OriginalCompressedDataName}\":");
+                    using (sb.IncreaseDepth())
+                    {
+                        sb.AppendLine("if (kernel.ReadString(reader) is { } originalCompressedData)");
+                        using (sb.CurlyBrace())
+                        {
+                            sb.AppendLine("Mutagen.Bethesda.Plugins.Records.FileLayoutMixIn.SetOriginalCompressedData(obj, System.Convert.FromBase64String(originalCompressedData));");
+                        }
+                        sb.AppendLine("break;");
+                    }
+                }
+
+                if (CellChildGroupLayoutMixIn(compilation, obj) is { } cellMixInForRead)
+                {
+                    generatedForProperty = true;
+                    sb.AppendLine($"case \"{ChildGroupLayoutName}\":");
+                    using (sb.IncreaseDepth())
+                    {
+                        sb.AppendLine($"{cellMixInForRead}.SetChildGroupLayout(obj, kernel.ReadString(reader));");
+                        sb.AppendLine("break;");
+                    }
+                }
+
+                if (CarriesEmptyTopLevelGroups(compilation, isMod))
+                {
+                    generatedForProperty = true;
+                    sb.AppendLine($"case \"{EmptyTopLevelGroupsName}\":");
+                    using (sb.IncreaseDepth())
+                    {
+                        sb.AppendLine("Mutagen.Bethesda.Plugins.Records.FileLayoutMixIn.SetEmptyTopLevelGroups(obj, kernel.ReadString(reader));");
+                        sb.AppendLine("break;");
+                    }
+                }
+
                 if (CarriesModRoundTripNotes(compilation, isMod))
                 {
                     generatedForProperty = true;
@@ -736,6 +825,33 @@ public class SerializationForObjectGenerator
                 using (sbInternal.CurlyBrace())
                 {
                     sbInternal.AppendLine($"kernel.WriteString(writer, \"{SubrecordOrderName}\", subrecordOrder, default, checkDefaults: false);");
+                }
+            }
+
+            if (CarriesOriginalCompressedData(compilation, obj))
+            {
+                sbInternal.AppendLine("if (Mutagen.Bethesda.Plugins.Records.FileLayoutMixIn.GetOriginalCompressedDataIfNotReproduced(item) is { } originalCompressedData)");
+                using (sbInternal.CurlyBrace())
+                {
+                    sbInternal.AppendLine($"kernel.WriteString(writer, \"{OriginalCompressedDataName}\", System.Convert.ToBase64String(originalCompressedData), default, checkDefaults: false);");
+                }
+            }
+
+            if (CellChildGroupLayoutMixIn(compilation, obj) is { } cellMixIn)
+            {
+                sbInternal.AppendLine($"if ({cellMixIn}.GetChildGroupLayout(item) is {{ }} childGroupLayout)");
+                using (sbInternal.CurlyBrace())
+                {
+                    sbInternal.AppendLine($"kernel.WriteString(writer, \"{ChildGroupLayoutName}\", childGroupLayout, default, checkDefaults: false);");
+                }
+            }
+
+            if (CarriesEmptyTopLevelGroups(compilation, isMod))
+            {
+                sbInternal.AppendLine("if (Mutagen.Bethesda.Plugins.Records.FileLayoutMixIn.GetEmptyTopLevelGroups(item) is { } emptyTopLevelGroups)");
+                using (sbInternal.CurlyBrace())
+                {
+                    sbInternal.AppendLine($"kernel.WriteString(writer, \"{EmptyTopLevelGroupsName}\", emptyTopLevelGroups, default, checkDefaults: false);");
                 }
             }
 

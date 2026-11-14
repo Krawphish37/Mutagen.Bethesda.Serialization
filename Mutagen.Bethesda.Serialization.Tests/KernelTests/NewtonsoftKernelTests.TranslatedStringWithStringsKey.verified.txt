@@ -1,0 +1,36 @@
+﻿{
+  "TranslatedStringWithStringsKey1": {},
+  "TranslatedStringWithStringsKey2": {
+    "TargetLanguage": "English",
+    "Value": "Hello",
+    "StringsKey": 4660,
+    "StringsSource": "Normal",
+    "StringsPlugin": "sfta01.esm"
+  },
+  "TranslatedStringWithStringsKey3": {
+    "TargetLanguage": "English",
+    "StringsKey": 7,
+    "StringsSource": "IL",
+    "StringsPlugin": "Starfield.esm"
+  },
+  "TranslatedStringWithStringsKey4": {
+    "TargetLanguage": "Spanish",
+    "Values": [
+      {
+        "Language": "English",
+        "String": "Hello"
+      },
+      {
+        "Language": "French",
+        "String": "Bonjour"
+      }
+    ],
+    "StringsKey": 4294967295,
+    "StringsSource": "DL",
+    "StringsPlugin": "Some Mod.esp"
+  },
+  "TranslatedStringWithStringsKey5": {
+    "TargetLanguage": "English",
+    "Value": "No key"
+  }
+}
