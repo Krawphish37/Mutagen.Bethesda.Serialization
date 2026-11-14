@@ -45,6 +45,7 @@ namespace Mutagen.Bethesda.Serialization.SourceGenerator.Serialization;
 [Register(typeof(BoolFieldGenerator), typeof(ISerializationForFieldGenerator))]
 [Register(typeof(GuidFieldGenerator), typeof(ISerializationForFieldGenerator))]
 [Register(typeof(DoubleFieldGenerator), typeof(ISerializationForFieldGenerator))]
+[Register(typeof(HalfFieldGenerator), typeof(ISerializationForFieldGenerator))]
 [Register(typeof(LoquiFieldGenerator), typeof(ISerializationForFieldGenerator), typeof(LoquiFieldGenerator))]
 [Register(typeof(EnumFieldGenerator), typeof(ISerializationForFieldGenerator), typeof(EnumFieldGenerator))]
 [Register(typeof(StringFieldGenerator), typeof(ISerializationForFieldGenerator))]

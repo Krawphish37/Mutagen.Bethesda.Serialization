@@ -350,6 +350,29 @@ public abstract class AKernelTest<TWriterKernel, TWriter, TReaderKernel, TReader
             float.NaN);
     }
 
+    // C222
+    [Fact]
+    public async Task Half()
+    {
+        await DoPrimitiveTest<System.Half?>(
+            "Half",
+            (k, w, name, item, def) => k.WriteHalf(w, name, item, def),
+            (k, r) => k.ReadHalf(r),
+            equality: (l, r) => FloatSerialization.BitEquals(l, r),
+            (System.Half)1,
+            (System.Half)0,
+            (System.Half)(-5),
+            BitConverter.UInt16BitsToHalf(0x8000),
+            BitConverter.UInt16BitsToHalf(0x2E66),
+            System.Half.MinValue,
+            System.Half.MaxValue,
+            System.Half.Epsilon,
+            System.Half.PositiveInfinity,
+            System.Half.NaN,
+            BitConverter.UInt16BitsToHalf(0x7C01),
+            BitConverter.UInt16BitsToHalf(0xFFFF));
+    }
+
     [Fact]
     public async Task Double()
     {

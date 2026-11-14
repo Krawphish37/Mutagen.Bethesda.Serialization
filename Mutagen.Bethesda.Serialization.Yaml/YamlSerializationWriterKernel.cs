@@ -141,6 +141,11 @@ public class YamlSerializationWriterKernel : ISerializationWriterKernel<YamlWrit
         WriteString(writer, fieldName, item == null ? null : FloatSerialization.ToString(item.Value, TargetCulture.English));
     }
 
+    public void WriteHalf(YamlWritingUnit writer, string? fieldName, Half? item)
+    {
+        WriteString(writer, fieldName, item == null ? null : FloatSerialization.ToString(item.Value, TargetCulture.English));
+    }
+
     public void WriteDouble(YamlWritingUnit writer, string? fieldName, double? item)
     {
         WriteString(writer, fieldName, item == null ? null : FloatSerialization.ToString(item.Value, TargetCulture.English));

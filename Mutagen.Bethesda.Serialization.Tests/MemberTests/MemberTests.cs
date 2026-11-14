@@ -285,6 +285,13 @@ public class MemberTests : ATestsBase
     {
         return TestHelper.VerifySerialization(GetPrimitiveTest("float", "Single"));
     }
+
+    // C222
+    [Fact]
+    public Task Half()
+    {
+        return TestHelper.VerifySerialization(GetPrimitiveTest("System.Half", "Half"));
+    }
     
     [Fact]
     public Task Color()

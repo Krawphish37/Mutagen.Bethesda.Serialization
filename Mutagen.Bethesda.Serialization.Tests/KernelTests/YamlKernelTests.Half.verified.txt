@@ -1,0 +1,12 @@
+﻿Half1: {}
+Half2: 0
+Half3: -5
+Half4: -0
+Half5: 0.0999755859375
+Half6: -65504
+Half7: 65504
+Half8: 5.960464477539063E-08
+Half9: ∞
+Half10: NaN
+Half11: NaN:7C01
+Half12: NaN:FFFF

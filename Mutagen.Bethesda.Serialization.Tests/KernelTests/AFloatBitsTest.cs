@@ -101,6 +101,62 @@ public abstract class AFloatBitsTest<TWriterKernel, TWriter, TReaderKernel, TRea
         Read(text, (k, r) => k.ReadDouble(r)).ShouldNotContainKey("D");
     }
 
+    public static IEnumerable<object[]> HalfBits() => new[]
+    {
+        new object[] { (ushort)0x8000 }, // -0
+        new object[] { (ushort)0xFE00 }, // .NET's Half.NaN
+        new object[] { (ushort)0x7E00 }, // positive quiet NaN
+        new object[] { (ushort)0x7C01 }, // signalling NaN
+        new object[] { (ushort)0xFFFF }, // NaN, every bit set
+        new object[] { (ushort)0x7FFF },
+        new object[] { (ushort)0x0001 }, // smallest denormal
+        new object[] { (ushort)0x83FF }, // largest negative denormal
+        new object[] { (ushort)0x3C00 }, // 1.0
+        new object[] { (ushort)0x2E66 }, // 0.0999755859375
+        new object[] { (ushort)0x7BFF }, // 65504
+        new object[] { (ushort)0x7C00 }, // +infinity
+        new object[] { (ushort)0xFC00 }, // -infinity
+    };
+
+    // C222: System.Half
+    [Theory]
+    [MemberData(nameof(HalfBits))]
+    public void Half_RoundTripsBits(ushort bits)
+    {
+        var value = BitConverter.UInt16BitsToHalf(bits);
+        var text = Write((k, w) => k.WriteHalf(w, "H", value, default(Half)));
+        var read = Read(text, (k, r) => k.ReadHalf(r));
+        read.ShouldContainKey("H");
+        BitConverter.HalfToUInt16Bits(read["H"]!.Value).ShouldBe(bits);
+    }
+
+    // Every one of the 65,536 Half bit patterns comes back as written
+    [Fact]
+    public void Half_EveryBitPatternRoundTrips()
+    {
+        var text = Write((k, w) =>
+        {
+            for (int i = 0; i <= ushort.MaxValue; i++)
+            {
+                k.WriteHalf(w, $"H{i}", BitConverter.UInt16BitsToHalf((ushort)i), default(Half), checkDefaults: false);
+            }
+        });
+        var read = Read(text, (k, r) => k.ReadHalf(r));
+        read.Count.ShouldBe(ushort.MaxValue + 1);
+        var wrong = Enumerable.Range(0, ushort.MaxValue + 1)
+            .Where(i => BitConverter.HalfToUInt16Bits(read[$"H{i}"]!.Value) != i)
+            .Select(i => i.ToString("X4"))
+            .ToArray();
+        wrong.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void Half_PositiveZeroIsStillTheDefault()
+    {
+        var text = Write((k, w) => k.WriteHalf(w, "H", (Half)0, default(Half)));
+        Read(text, (k, r) => k.ReadHalf(r)).ShouldNotContainKey("H");
+    }
+
     public static IEnumerable<object[]> P3FloatBits() => new[]
     {
         new object[] { 0x80000000u, 0u, 0u },                   // (-0, 0, 0)

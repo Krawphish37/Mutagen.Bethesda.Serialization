@@ -105,6 +105,12 @@ public class MutagenSerializationWriterKernel<TKernel, TWriterObject> : IExcepti
         if (checkDefaults && FloatSerialization.BitEquals(item, defaultVal)) return;
         _kernel.WriteDouble(writer, fieldName, item);
     }
+
+    public void WriteHalf(TWriterObject writer, string? fieldName, Half? item, Half? defaultVal, bool checkDefaults = true)
+    {
+        if (checkDefaults && FloatSerialization.BitEquals(item, defaultVal)) return;
+        _kernel.WriteHalf(writer, fieldName, item);
+    }
     
     public void WriteModKey(TWriterObject writer, string? fieldName, ModKey? item, ModKey? defaultVal, bool checkDefaults = true)
     {

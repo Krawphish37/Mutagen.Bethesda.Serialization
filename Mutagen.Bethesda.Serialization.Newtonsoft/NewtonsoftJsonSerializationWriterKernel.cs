@@ -239,6 +239,25 @@ public class NewtonsoftJsonSerializationWriterKernel : ISerializationWriterKerne
         }
     }
 
+    public void WriteHalf(JsonWritingUnit writer, string? fieldName, Half? item)
+    {
+        writer.WriteName(fieldName);
+
+        if (item == null)
+        {
+            writer.Writer.WriteValue(string.Empty);
+        }
+        else if (FloatSerialization.NeedsBitForm(item.Value))
+        {
+            writer.Writer.WriteValue(FloatSerialization.ToBitForm(item.Value));
+        }
+        else
+        {
+            // The double holding the same number: written exactly, read back exactly (C222)
+            writer.Writer.WriteValue(FloatSerialization.ToDouble(item.Value));
+        }
+    }
+
     public void WriteDouble(JsonWritingUnit writer, string? fieldName, double? item)
     {
         writer.WriteName(fieldName);

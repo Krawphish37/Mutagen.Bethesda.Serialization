@@ -115,6 +115,11 @@ public class TestKernel : ISerializationReaderKernel<TestReader>, ISerialization
         throw new NotImplementedException();
     }
 
+    public void WriteHalf(TestWriter writer, string? fieldName, Half? item)
+    {
+        throw new NotImplementedException();
+    }
+
     public void WriteModKey(TestWriter writer, string? fieldName, ModKey? item)
     {
         throw new NotImplementedException();
@@ -394,6 +399,11 @@ public class TestKernel : ISerializationReaderKernel<TestReader>, ISerialization
     }
 
     public double? ReadDouble(TestReader reader)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Half? ReadHalf(TestReader reader)
     {
         throw new NotImplementedException();
     }

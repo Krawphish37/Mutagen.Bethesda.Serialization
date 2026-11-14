@@ -285,6 +285,13 @@ public class YamlSerializationReaderKernel : ISerializationReaderKernel<YamlRead
         return FloatSerialization.ParseFloat(str, TargetCulture.English);
     }
 
+    public Half? ReadHalf(YamlReadingUnit reader)
+    {
+        var str = ReadString(reader);
+        if (str.IsNullOrWhitespace()) return null;
+        return FloatSerialization.ParseHalf(str, TargetCulture.English);
+    }
+
     public double? ReadDouble(YamlReadingUnit reader)
     {
         var str = ReadString(reader);

@@ -7,9 +7,11 @@ namespace Mutagen.Bethesda.Serialization;
 /// Bit-exact handling of floats and doubles for serialization.
 /// <list type="bullet">
 /// <item>Default checks compare bits, so -0.0 is not taken for the default 0.0 (and left out).</item>
-/// <item>A NaN whose bits differ from .NET's own NaN (float FFC00000, double FFF8000000000000) is written as
-/// "NaN:" plus its bits in hex (e.g. "NaN:FFFFFFFF"), so its payload survives. Every other value is written as before,
-/// and older files (plain numbers, "NaN") still read.</item>
+/// <item>A NaN whose bits differ from .NET's own NaN (float FFC00000, double FFF8000000000000, Half FE00) is written as
+/// "NaN:" plus its bits in hex (e.g. "NaN:FFFFFFFF", "NaN:7C01"), so its payload survives. Every other value is written
+/// as before, and older files (plain numbers, "NaN") still read.</item>
+/// <item>A Half (C222) is written as the number it holds (every Half is exactly a double, so the double's text gives it
+/// back exactly), -0 included; infinities and .NET's NaN as their names.</item>
 /// </list>
 /// </summary>
 public static class FloatSerialization
@@ -18,6 +20,7 @@ public static class FloatSerialization
 
     private static readonly int StandardFloatNaNBits = BitConverter.SingleToInt32Bits(float.NaN);
     private static readonly long StandardDoubleNaNBits = BitConverter.DoubleToInt64Bits(double.NaN);
+    private static readonly ushort StandardHalfNaNBits = BitConverter.HalfToUInt16Bits(Half.NaN);
 
     public static bool BitEquals(float a, float b) =>
         BitConverter.SingleToInt32Bits(a) == BitConverter.SingleToInt32Bits(b);
@@ -29,6 +32,12 @@ public static class FloatSerialization
         BitConverter.DoubleToInt64Bits(a) == BitConverter.DoubleToInt64Bits(b);
 
     public static bool BitEquals(double? a, double? b) =>
+        a.HasValue ? b.HasValue && BitEquals(a.Value, b.Value) : !b.HasValue;
+
+    public static bool BitEquals(Half a, Half b) =>
+        BitConverter.HalfToUInt16Bits(a) == BitConverter.HalfToUInt16Bits(b);
+
+    public static bool BitEquals(Half? a, Half? b) =>
         a.HasValue ? b.HasValue && BitEquals(a.Value, b.Value) : !b.HasValue;
 
     public static bool BitEquals(P2Float a, P2Float b) => BitEquals(a.X, b.X) && BitEquals(a.Y, b.Y);
@@ -48,6 +57,39 @@ public static class FloatSerialization
 
     public static bool NeedsBitForm(double d) =>
         double.IsNaN(d) && BitConverter.DoubleToInt64Bits(d) != StandardDoubleNaNBits;
+
+    public static bool NeedsBitForm(Half h) =>
+        Half.IsNaN(h) && BitConverter.HalfToUInt16Bits(h) != StandardHalfNaNBits;
+
+    public static string ToBitForm(Half h) =>
+        NaNBitsPrefix + BitConverter.HalfToUInt16Bits(h).ToString("X4", CultureInfo.InvariantCulture);
+
+    /// <summary>"NaN:" and 4 hex digits: a Half NaN's bits</summary>
+    public static bool TryParseBitForm(string? str, out Half h)
+    {
+        h = default;
+        if (str == null) return false;
+        var s = str.Trim();
+        if (!s.StartsWith(NaNBitsPrefix, StringComparison.OrdinalIgnoreCase)) return false;
+        if (!ushort.TryParse(s.AsSpan(NaNBitsPrefix.Length), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var bits)) return false;
+        h = BitConverter.UInt16BitsToHalf(bits);
+        return true;
+    }
+
+    /// <summary>A Half as a double: the same number exactly (-0, infinities and .NET's NaN too)</summary>
+    public static double ToDouble(Half h) => (double)h;
+
+    /// <summary>A double that holds a Half's number back to that Half (exact: no rounding happens)</summary>
+    public static Half FromDouble(double d) => (Half)d;
+
+    public static string ToString(Half h, IFormatProvider provider) =>
+        NeedsBitForm(h) ? ToBitForm(h) : ((double)h).ToString("R", provider);
+
+    public static Half ParseHalf(string str, IFormatProvider? provider = null)
+    {
+        if (TryParseBitForm(str, out Half h)) return h;
+        return (Half)ParseDouble(str, provider);
+    }
 
     public static string ToBitForm(float f) =>
         NaNBitsPrefix + unchecked((uint)BitConverter.SingleToInt32Bits(f)).ToString("X8", CultureInfo.InvariantCulture);

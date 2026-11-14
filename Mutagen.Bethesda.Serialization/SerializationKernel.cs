@@ -63,6 +63,7 @@ public interface ISerializationReaderKernel<TReaderObject> : IExceptionConverter
     public ulong? ReadUInt64(TReaderObject reader);
     public float? ReadFloat(TReaderObject reader);
     public double? ReadDouble(TReaderObject reader);
+    public Half? ReadHalf(TReaderObject reader);
     public ModKey? ReadModKey(TReaderObject reader);
     public FormKey? ReadFormKey(TReaderObject reader);
     public Color? ReadColor(TReaderObject reader);
@@ -156,6 +157,7 @@ public interface ISerializationWriterKernel<TWriterObject> : IExceptionConverter
     public void WriteUInt64(TWriterObject writer, string? fieldName, ulong? item);
     public void WriteFloat(TWriterObject writer, string? fieldName, float? item);
     public void WriteDouble(TWriterObject writer, string? fieldName, double? item);
+    public void WriteHalf(TWriterObject writer, string? fieldName, Half? item);
     public void WriteModKey(TWriterObject writer, string? fieldName, ModKey? item);
     public void WriteFormKey(TWriterObject writer, string? fieldName, FormKey? item);
     public void WriteRecordType(TWriterObject writer, string? fieldName, RecordType? item);

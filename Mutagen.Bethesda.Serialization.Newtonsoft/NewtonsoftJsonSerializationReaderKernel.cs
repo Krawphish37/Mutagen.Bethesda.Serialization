@@ -326,6 +326,31 @@ public class NewtonsoftJsonSerializationReaderKernel : ISerializationReaderKerne
         }
     }
 
+    public Half? ReadHalf(JsonReadingUnit reader)
+    {
+        SkipPropertyName(reader);
+        switch (reader.Reader.Value)
+        {
+            case null:
+            case "":
+                return null;
+            case double d:
+                return FloatSerialization.FromDouble(d);
+            case float f:
+                return (Half)f;
+            case decimal m:
+                return FloatSerialization.FromDouble((double)m);
+            case int i:
+                return (Half)i;
+            case long l:
+                return (Half)l;
+            case string s:
+                return FloatSerialization.ParseHalf(s);
+            default:
+                throw new NotImplementedException();
+        }
+    }
+
     public double? ReadDouble(JsonReadingUnit reader)
     {
         SkipPropertyName(reader);
