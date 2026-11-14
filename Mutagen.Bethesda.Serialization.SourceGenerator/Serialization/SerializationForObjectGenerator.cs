@@ -38,6 +38,16 @@ public class SerializationForObjectGenerator
         => HasRoundTripPair(compilation, obj, OwnLinkFormsAsStoredName);
 
     /// <summary>
+    /// The field that carries the labels of a record's child groups stored in another form than its header (a Medium
+    /// plugin's full-index 02001DC3 for its record FD001DC3; RoundTripMixIn.GetGroupLabelFormsAsStored's opaque value),
+    /// written only when there are some (C223; RoleplayersAlternateStart.esm: 336 labels)
+    /// </summary>
+    private const string GroupLabelFormsAsStoredName = "GroupLabelFormsAsStored";
+
+    private static bool CarriesGroupLabelFormsAsStored(CompilationUnit compilation, LoquiTypeSet obj)
+        => HasRoundTripPair(compilation, obj, GroupLabelFormsAsStoredName);
+
+    /// <summary>
     /// The field that carries the order a record's subrecords had in its file, when it differs from Mutagen's
     /// (RoundTripMixIn.GetSubrecordOrder's opaque value), written only when there is one (C211)
     /// </summary>
@@ -490,6 +500,17 @@ public class SerializationForObjectGenerator
                     }
                 }
 
+                if (CarriesGroupLabelFormsAsStored(compilation, obj))
+                {
+                    generatedForProperty = true;
+                    sb.AppendLine($"case \"{GroupLabelFormsAsStoredName}\":");
+                    using (sb.IncreaseDepth())
+                    {
+                        sb.AppendLine("Mutagen.Bethesda.Plugins.Records.RoundTripMixIn.SetGroupLabelFormsAsStored(obj, kernel.ReadString(reader));");
+                        sb.AppendLine("break;");
+                    }
+                }
+
                 if (CarriesSubrecordOrder(compilation, obj))
                 {
                     generatedForProperty = true;
@@ -816,6 +837,15 @@ public class SerializationForObjectGenerator
                 using (sbInternal.CurlyBrace())
                 {
                     sbInternal.AppendLine($"kernel.WriteString(writer, \"{OwnLinkFormsAsStoredName}\", ownLinkFormsAsStored, default, checkDefaults: false);");
+                }
+            }
+
+            if (CarriesGroupLabelFormsAsStored(compilation, obj))
+            {
+                sbInternal.AppendLine("if (Mutagen.Bethesda.Plugins.Records.RoundTripMixIn.GetGroupLabelFormsAsStored(item) is { } groupLabelFormsAsStored)");
+                using (sbInternal.CurlyBrace())
+                {
+                    sbInternal.AppendLine($"kernel.WriteString(writer, \"{GroupLabelFormsAsStoredName}\", groupLabelFormsAsStored, default, checkDefaults: false);");
                 }
             }
 
