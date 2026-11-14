@@ -4,6 +4,7 @@ using Mutagen.Bethesda.Plugins.Assets;
 using Mutagen.Bethesda.Plugins.Binary.Streams;
 using Mutagen.Bethesda.Plugins.Binary.Translations;
 using Mutagen.Bethesda.Plugins.Records;
+using Noggog;
 using Noggog.StructuredStrings;
 
 namespace Mutagen.Bethesda.Serialization.SourceGenerator.Tests;
@@ -42,7 +43,7 @@ public class TestMajorRecord : ITestMajorRecord, IEquatable<TestMajorRecord>
     }
 
     public IEnumerable<IAssetLinkGetter> EnumerateAssetLinks(AssetLinkQuery queryCategories, IAssetLinkCache? linkCache = null,
-        Type? assetType = null)
+        Type? assetType = null, bool iterateNestedRecords = true)
     {
         throw new NotImplementedException();
     }
@@ -57,7 +58,7 @@ public class TestMajorRecord : ITestMajorRecord, IEquatable<TestMajorRecord>
         throw new NotImplementedException();
     }
 
-    public IEnumerable<IAssetLink> EnumerateListedAssetLinks()
+    public IEnumerable<IAssetLink> EnumerateListedAssetLinks(bool iterateNestedRecords = true)
     {
         throw new NotImplementedException();
     }
@@ -193,6 +194,11 @@ public class TestMajorRecord : ITestMajorRecord, IEquatable<TestMajorRecord>
     bool IMajorRecordGetter.IsCompressed => throw new NotImplementedException();
 
     bool IMajorRecordGetter.IsDeleted => throw new NotImplementedException();
+
+    // Our Mutagen (C134): subrecords no field claimed, kept from the read
+    public MemorySlice<byte>? UnknownSubrecords { get; set; }
+    ReadOnlyMemorySlice<byte>? IMajorRecordGetter.UnknownSubrecords => UnknownSubrecords;
+    public string? UnknownSubrecordsSource { get; set; }
 
     ushort? IMajorRecordGetter.FormVersion => throw new NotImplementedException();
 

@@ -18,7 +18,7 @@ public class TestGroup : IGroup<TestMajorRecord>, IEquatable<TestGroup>
     }
 
     public IEnumerable<IAssetLinkGetter> EnumerateAssetLinks(AssetLinkQuery queryCategories, IAssetLinkCache? linkCache = null,
-        Type? assetType = null)
+        Type? assetType = null, bool iterateNestedRecords = true)
     {
         throw new NotImplementedException();
     }
@@ -119,7 +119,7 @@ public class TestGroup : IGroup<TestMajorRecord>, IEquatable<TestGroup>
         throw new NotImplementedException();
     }
 
-    public IEnumerable<IAssetLink> EnumerateListedAssetLinks()
+    public IEnumerable<IAssetLink> EnumerateListedAssetLinks(bool iterateNestedRecords = true)
     {
         throw new NotImplementedException();
     }
