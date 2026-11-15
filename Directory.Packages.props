@@ -15,12 +15,12 @@
     </PackageVersion>
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.3.0" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.7.0" />
-    <PackageVersion Include="Mutagen.Bethesda.Core" Version="0.55.0-fixes.16" />
-    <PackageVersion Include="Mutagen.Bethesda.Fallout4" Version="0.55.0-fixes.16" />
-    <PackageVersion Include="Mutagen.Bethesda.Skyrim" Version="0.55.0-fixes.16" />
-    <PackageVersion Include="Mutagen.Bethesda.Starfield" Version="0.55.0-fixes.16" />
-    <PackageVersion Include="Mutagen.Bethesda.Oblivion" Version="0.55.0-fixes.16" />
-    <PackageVersion Include="Mutagen.Bethesda.Testing" Version="0.55.0-fixes.16" />
+    <PackageVersion Include="Mutagen.Bethesda.Core" Version="0.55.0-fixes.17" />
+    <PackageVersion Include="Mutagen.Bethesda.Fallout4" Version="0.55.0-fixes.17" />
+    <PackageVersion Include="Mutagen.Bethesda.Skyrim" Version="0.55.0-fixes.17" />
+    <PackageVersion Include="Mutagen.Bethesda.Starfield" Version="0.55.0-fixes.17" />
+    <PackageVersion Include="Mutagen.Bethesda.Oblivion" Version="0.55.0-fixes.17" />
+    <PackageVersion Include="Mutagen.Bethesda.Testing" Version="0.55.0-fixes.17" />
     <PackageVersion Include="Mutagen.Bethesda.Serialization" Version="[$(GitVersion_NuGetVersion)]" />
     <PackageVersion Include="Mutagen.Bethesda.Serialization.Newtonsoft" Version="[$(GitVersion_NuGetVersion)]" />
     <PackageVersion Include="Mutagen.Bethesda.Serialization.SourceGenerator" Version="[$(GitVersion_NuGetVersion)]" />
