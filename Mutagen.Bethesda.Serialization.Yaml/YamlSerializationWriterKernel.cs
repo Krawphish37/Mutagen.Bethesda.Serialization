@@ -255,7 +255,7 @@ public class YamlSerializationWriterKernel : ISerializationWriterKernel<YamlWrit
         }
         
         writer.Emitter.Emit(new MappingStart());
-        writer.WriteScalar("TargetLanguage");
+        writer.WriteScalar(TranslatedStringNames.TargetLanguage);
         writer.WriteScalar(item.TargetLanguage.ToStringFast());
         
         
@@ -263,20 +263,20 @@ public class YamlSerializationWriterKernel : ISerializationWriterKernel<YamlWrit
         {
             if (item.String is { } str)
             {
-                writer.WriteScalar("Value");
+                writer.WriteScalar(TranslatedStringNames.Value);
                 writer.WriteScalar(str);
             }
         }
         else
         {
-            writer.WriteScalar("Values");
+            writer.WriteScalar(TranslatedStringNames.Values);
             writer.Emitter.Emit(new SequenceStart(AnchorName.Empty, TagName.Empty, false, SequenceStyle.Any));
             foreach (var entry in item)
             {
                 writer.Emitter.Emit(new MappingStart(AnchorName.Empty, TagName.Empty, false, MappingStyle.Any));
-                writer.WriteScalar("Language");
+                writer.WriteScalar(TranslatedStringNames.Language);
                 writer.WriteScalar(entry.Key.ToStringFast());
-                writer.WriteScalar("String");
+                writer.WriteScalar(TranslatedStringNames.String);
                 writer.WriteScalar(entry.Value);
                 writer.Emitter.Emit(new MappingEnd());
             }

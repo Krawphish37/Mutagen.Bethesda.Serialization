@@ -499,28 +499,28 @@ public class YamlSerializationReaderKernel : ISerializationReaderKernel<YamlRead
                     reader.Parser.Consume<Scalar>();
                     if (inArray)
                     {
-                        if (propName == "Language"
+                        if (propName == TranslatedStringNames.Language
                             && reader.Parser.Accept<Scalar>(out var lang))
                         {
                             language = Enum.Parse<Language>(lang.Value);
                         }
-                        else if (propName == "String"
+                        else if (propName == TranslatedStringNames.String
                                  && reader.Parser.Accept<Scalar>(out var strVal))
                         {
                             str = strVal.Value.ReplaceLineEndings("\r\n");
                         }
                     }
-                    else if (propName == "TargetLanguage"
+                    else if (propName == TranslatedStringNames.TargetLanguage
                              && reader.Parser.Accept<Scalar>(out var lang))
                     {
                         targetLanguage = Enum.Parse<Language>(lang.Value);
                     }
-                    else if (propName == "Value"
+                    else if (propName == TranslatedStringNames.Value
                              && reader.Parser.Accept<Scalar>(out var val))
                     {
                         mainString = val.Value.ReplaceLineEndings("\r\n");
                     }
-                    else if (propName == "Values"
+                    else if (propName == TranslatedStringNames.Values
                              && reader.Parser.Accept<SequenceStart>(out _))
                     {
                         inArray = true;

@@ -573,24 +573,24 @@ public class NewtonsoftJsonSerializationReaderKernel : ISerializationReaderKerne
                     var propName = (string?)reader.Reader.Value;
                     if (inArray)
                     {
-                        if (propName == "Language")
+                        if (propName == TranslatedStringNames.Language)
                         {
                             language = Enum.Parse<Language>(reader.Reader.ReadAsString()!);
                         }
-                        else if (propName == "String")
+                        else if (propName == TranslatedStringNames.String)
                         {
                             str = reader.Reader.ReadAsString();
                         }
                     }
-                    else if (propName == "TargetLanguage")
+                    else if (propName == TranslatedStringNames.TargetLanguage)
                     {
                         targetLanguage = Enum.Parse<Language>(reader.Reader.ReadAsString()!);
                     }
-                    else if (propName == "Value")
+                    else if (propName == TranslatedStringNames.Value)
                     {
                         mainString = reader.Reader.ReadAsString()!;
                     }
-                    else if (propName == "Values")
+                    else if (propName == TranslatedStringNames.Values)
                     {
                         startingValues = true;
                     }

@@ -13,6 +13,14 @@ namespace Mutagen.Bethesda.Serialization.SourceGenerator.Serialization;
 public class SerializationForObjectGenerator
 {
     /// <summary>
+    /// The generated code's reference to the public name a round-trip note is written under
+    /// (Mutagen.Bethesda.Serialization.RoundTripNoteNames: each constant there is named as its value), so the names live
+    /// in one place that readers of the output can use (C59, W14). The names below are also the suffixes of the
+    /// Mutagen methods that give and take each note (RoundTripMixIn.Get/Set{name}).
+    /// </summary>
+    private static string NoteName(string name) => $"Mutagen.Bethesda.Serialization.RoundTripNoteNames.{name}";
+
+    /// <summary>
     /// The field that carries a record's header FormID as stored, when Mutagen keeps one other than the FormID it writes
     /// for the record's FormKey (e.g. a Small plugin's own record stored with its full index). Written only then, so
     /// other output is unchanged (C205).
@@ -477,7 +485,7 @@ public class SerializationForObjectGenerator
                 if (CarriesHeaderFormIdAsStored(compilation, obj))
                 {
                     generatedForProperty = true;
-                    sb.AppendLine($"case \"{HeaderFormIdAsStoredName}\":");
+                    sb.AppendLine($"case {NoteName(HeaderFormIdAsStoredName)}:");
                     using (sb.IncreaseDepth())
                     {
                         sb.AppendLine("if (kernel.ReadString(reader) is { } headerFormIdAsStored)");
@@ -492,7 +500,7 @@ public class SerializationForObjectGenerator
                 if (CarriesOwnLinkFormsAsStored(compilation, obj))
                 {
                     generatedForProperty = true;
-                    sb.AppendLine($"case \"{OwnLinkFormsAsStoredName}\":");
+                    sb.AppendLine($"case {NoteName(OwnLinkFormsAsStoredName)}:");
                     using (sb.IncreaseDepth())
                     {
                         sb.AppendLine("Mutagen.Bethesda.Plugins.Records.RoundTripMixIn.SetOwnLinkFormsAsStored(obj, kernel.ReadString(reader));");
@@ -503,7 +511,7 @@ public class SerializationForObjectGenerator
                 if (CarriesGroupLabelFormsAsStored(compilation, obj))
                 {
                     generatedForProperty = true;
-                    sb.AppendLine($"case \"{GroupLabelFormsAsStoredName}\":");
+                    sb.AppendLine($"case {NoteName(GroupLabelFormsAsStoredName)}:");
                     using (sb.IncreaseDepth())
                     {
                         sb.AppendLine("Mutagen.Bethesda.Plugins.Records.RoundTripMixIn.SetGroupLabelFormsAsStored(obj, kernel.ReadString(reader));");
@@ -514,7 +522,7 @@ public class SerializationForObjectGenerator
                 if (CarriesSubrecordOrder(compilation, obj))
                 {
                     generatedForProperty = true;
-                    sb.AppendLine($"case \"{SubrecordOrderName}\":");
+                    sb.AppendLine($"case {NoteName(SubrecordOrderName)}:");
                     using (sb.IncreaseDepth())
                     {
                         sb.AppendLine("Mutagen.Bethesda.Plugins.Records.RoundTripMixIn.SetSubrecordOrder(obj, kernel.ReadString(reader));");
@@ -525,7 +533,7 @@ public class SerializationForObjectGenerator
                 if (CarriesOriginalCompressedData(compilation, obj))
                 {
                     generatedForProperty = true;
-                    sb.AppendLine($"case \"{OriginalCompressedDataName}\":");
+                    sb.AppendLine($"case {NoteName(OriginalCompressedDataName)}:");
                     using (sb.IncreaseDepth())
                     {
                         sb.AppendLine("if (kernel.ReadString(reader) is { } originalCompressedData)");
@@ -540,7 +548,7 @@ public class SerializationForObjectGenerator
                 if (CellChildGroupLayoutMixIn(compilation, obj) is { } cellMixInForRead)
                 {
                     generatedForProperty = true;
-                    sb.AppendLine($"case \"{ChildGroupLayoutName}\":");
+                    sb.AppendLine($"case {NoteName(ChildGroupLayoutName)}:");
                     using (sb.IncreaseDepth())
                     {
                         sb.AppendLine($"{cellMixInForRead}.SetChildGroupLayout(obj, kernel.ReadString(reader));");
@@ -551,7 +559,7 @@ public class SerializationForObjectGenerator
                 if (CarriesEmptyTopLevelGroups(compilation, isMod))
                 {
                     generatedForProperty = true;
-                    sb.AppendLine($"case \"{EmptyTopLevelGroupsName}\":");
+                    sb.AppendLine($"case {NoteName(EmptyTopLevelGroupsName)}:");
                     using (sb.IncreaseDepth())
                     {
                         sb.AppendLine("Mutagen.Bethesda.Plugins.Records.FileLayoutMixIn.SetEmptyTopLevelGroups(obj, kernel.ReadString(reader));");
@@ -562,7 +570,7 @@ public class SerializationForObjectGenerator
                 if (CarriesModRoundTripNotes(compilation, isMod))
                 {
                     generatedForProperty = true;
-                    sb.AppendLine("case \"OwnFormIdStyle\":");
+                    sb.AppendLine("case " + NoteName("OwnFormIdStyle") + ":");
                     using (sb.IncreaseDepth())
                     {
                         sb.AppendLine("if (kernel.ReadString(reader) is { } ownFormIdStyle)");
@@ -572,13 +580,13 @@ public class SerializationForObjectGenerator
                         }
                         sb.AppendLine("break;");
                     }
-                    sb.AppendLine("case \"HeaderStatsBaseline\":");
+                    sb.AppendLine("case " + NoteName("HeaderStatsBaseline") + ":");
                     using (sb.IncreaseDepth())
                     {
                         sb.AppendLine("Mutagen.Bethesda.Plugins.Records.RoundTripMixIn.SetHeaderStatsBaseline(obj, Mutagen.Bethesda.Serialization.Utility.RoundTripNotesHelper.HeaderStatsFromString(kernel.ReadString(reader)));");
                         sb.AppendLine("break;");
                     }
-                    sb.AppendLine("case \"OverriddenFormsBaseline\":");
+                    sb.AppendLine("case " + NoteName("OverriddenFormsBaseline") + ":");
                     using (sb.IncreaseDepth())
                     {
                         sb.AppendLine("Mutagen.Bethesda.Plugins.Records.RoundTripMixIn.SetOverriddenFormsBaseline(obj, Mutagen.Bethesda.Serialization.Utility.RoundTripNotesHelper.FormKeysFromString(kernel.ReadString(reader)));");
@@ -829,7 +837,7 @@ public class SerializationForObjectGenerator
                 sbInternal.AppendLine("if (metaData.RoundTripNotes && Mutagen.Bethesda.Plugins.Records.RoundTripMixIn.GetHeaderFormIdAsStored(item) is { } headerFormIdAsStored)");
                 using (sbInternal.CurlyBrace())
                 {
-                    sbInternal.AppendLine($"kernel.WriteString(writer, \"{HeaderFormIdAsStoredName}\", headerFormIdAsStored.ToString(\"X8\"), default, checkDefaults: false);");
+                    sbInternal.AppendLine($"kernel.WriteString(writer, {NoteName(HeaderFormIdAsStoredName)}, headerFormIdAsStored.ToString(\"X8\"), default, checkDefaults: false);");
                 }
             }
 
@@ -838,7 +846,7 @@ public class SerializationForObjectGenerator
                 sbInternal.AppendLine("if (metaData.RoundTripNotes && Mutagen.Bethesda.Plugins.Records.RoundTripMixIn.GetOwnLinkFormsAsStored(item) is { } ownLinkFormsAsStored)");
                 using (sbInternal.CurlyBrace())
                 {
-                    sbInternal.AppendLine($"kernel.WriteString(writer, \"{OwnLinkFormsAsStoredName}\", ownLinkFormsAsStored, default, checkDefaults: false);");
+                    sbInternal.AppendLine($"kernel.WriteString(writer, {NoteName(OwnLinkFormsAsStoredName)}, ownLinkFormsAsStored, default, checkDefaults: false);");
                 }
             }
 
@@ -847,7 +855,7 @@ public class SerializationForObjectGenerator
                 sbInternal.AppendLine("if (metaData.RoundTripNotes && Mutagen.Bethesda.Plugins.Records.RoundTripMixIn.GetGroupLabelFormsAsStored(item) is { } groupLabelFormsAsStored)");
                 using (sbInternal.CurlyBrace())
                 {
-                    sbInternal.AppendLine($"kernel.WriteString(writer, \"{GroupLabelFormsAsStoredName}\", groupLabelFormsAsStored, default, checkDefaults: false);");
+                    sbInternal.AppendLine($"kernel.WriteString(writer, {NoteName(GroupLabelFormsAsStoredName)}, groupLabelFormsAsStored, default, checkDefaults: false);");
                 }
             }
 
@@ -856,7 +864,7 @@ public class SerializationForObjectGenerator
                 sbInternal.AppendLine("if (metaData.RoundTripNotes && Mutagen.Bethesda.Plugins.Records.RoundTripMixIn.GetSubrecordOrder(item) is { } subrecordOrder)");
                 using (sbInternal.CurlyBrace())
                 {
-                    sbInternal.AppendLine($"kernel.WriteString(writer, \"{SubrecordOrderName}\", subrecordOrder, default, checkDefaults: false);");
+                    sbInternal.AppendLine($"kernel.WriteString(writer, {NoteName(SubrecordOrderName)}, subrecordOrder, default, checkDefaults: false);");
                 }
             }
 
@@ -865,7 +873,7 @@ public class SerializationForObjectGenerator
                 sbInternal.AppendLine("if (metaData.RoundTripNotes && Mutagen.Bethesda.Plugins.Records.FileLayoutMixIn.GetOriginalCompressedDataIfNotReproduced(item) is { } originalCompressedData)");
                 using (sbInternal.CurlyBrace())
                 {
-                    sbInternal.AppendLine($"kernel.WriteString(writer, \"{OriginalCompressedDataName}\", System.Convert.ToBase64String(originalCompressedData), default, checkDefaults: false);");
+                    sbInternal.AppendLine($"kernel.WriteString(writer, {NoteName(OriginalCompressedDataName)}, System.Convert.ToBase64String(originalCompressedData), default, checkDefaults: false);");
                 }
             }
 
@@ -874,7 +882,7 @@ public class SerializationForObjectGenerator
                 sbInternal.AppendLine($"if (metaData.RoundTripNotes && {cellMixIn}.GetChildGroupLayout(item) is {{ }} childGroupLayout)");
                 using (sbInternal.CurlyBrace())
                 {
-                    sbInternal.AppendLine($"kernel.WriteString(writer, \"{ChildGroupLayoutName}\", childGroupLayout, default, checkDefaults: false);");
+                    sbInternal.AppendLine($"kernel.WriteString(writer, {NoteName(ChildGroupLayoutName)}, childGroupLayout, default, checkDefaults: false);");
                 }
             }
 
@@ -883,7 +891,7 @@ public class SerializationForObjectGenerator
                 sbInternal.AppendLine("if (metaData.RoundTripNotes && Mutagen.Bethesda.Plugins.Records.FileLayoutMixIn.GetEmptyTopLevelGroups(item) is { } emptyTopLevelGroups)");
                 using (sbInternal.CurlyBrace())
                 {
-                    sbInternal.AppendLine($"kernel.WriteString(writer, \"{EmptyTopLevelGroupsName}\", emptyTopLevelGroups, default, checkDefaults: false);");
+                    sbInternal.AppendLine($"kernel.WriteString(writer, {NoteName(EmptyTopLevelGroupsName)}, emptyTopLevelGroups, default, checkDefaults: false);");
                 }
             }
 
@@ -892,17 +900,17 @@ public class SerializationForObjectGenerator
                 sbInternal.AppendLine("if (metaData.RoundTripNotes && Mutagen.Bethesda.Plugins.Records.RoundTripMixIn.GetOwnFormIdStyle(item) is var ownFormIdStyle && ownFormIdStyle != Mutagen.Bethesda.Plugins.Records.ModOwnFormIdStyle.Default)");
                 using (sbInternal.CurlyBrace())
                 {
-                    sbInternal.AppendLine("kernel.WriteString(writer, \"OwnFormIdStyle\", ownFormIdStyle.ToString(), default, checkDefaults: false);");
+                    sbInternal.AppendLine("kernel.WriteString(writer, " + NoteName("OwnFormIdStyle") + ", ownFormIdStyle.ToString(), default, checkDefaults: false);");
                 }
                 sbInternal.AppendLine("if (metaData.RoundTripNotes && Mutagen.Bethesda.Serialization.Utility.RoundTripNotesHelper.HeaderStatsToString(Mutagen.Bethesda.Plugins.Records.RoundTripMixIn.GetHeaderStatsBaseline(item)) is { } headerStatsBaseline)");
                 using (sbInternal.CurlyBrace())
                 {
-                    sbInternal.AppendLine("kernel.WriteString(writer, \"HeaderStatsBaseline\", headerStatsBaseline, default, checkDefaults: false);");
+                    sbInternal.AppendLine("kernel.WriteString(writer, " + NoteName("HeaderStatsBaseline") + ", headerStatsBaseline, default, checkDefaults: false);");
                 }
                 sbInternal.AppendLine("if (metaData.RoundTripNotes && Mutagen.Bethesda.Serialization.Utility.RoundTripNotesHelper.FormKeysToString(Mutagen.Bethesda.Plugins.Records.RoundTripMixIn.GetOverriddenFormsBaseline(item)) is { } overriddenFormsBaseline)");
                 using (sbInternal.CurlyBrace())
                 {
-                    sbInternal.AppendLine("kernel.WriteString(writer, \"OverriddenFormsBaseline\", overriddenFormsBaseline, default, checkDefaults: false);");
+                    sbInternal.AppendLine("kernel.WriteString(writer, " + NoteName("OverriddenFormsBaseline") + ", overriddenFormsBaseline, default, checkDefaults: false);");
                 }
             }
 

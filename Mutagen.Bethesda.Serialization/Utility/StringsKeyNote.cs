@@ -17,6 +17,12 @@ public static class StringsKeyNote
     public const string PluginName = "StringsPlugin";
 
     /// <summary>
+    /// The three names a text's strings ID is written under, inside the text's object: <see cref="KeyName"/>,
+    /// <see cref="SourceName"/>, <see cref="PluginName"/>
+    /// </summary>
+    public static IReadOnlySet<string> Names { get; } = new HashSet<string>(StringComparer.Ordinal) { KeyName, SourceName, PluginName };
+
+    /// <summary>
     /// The ID of a text that has one, with the name of its table and its plugin's file name
     /// </summary>
     public static bool TryGet(ITranslatedStringGetter item, out uint key, out string source, out string plugin)

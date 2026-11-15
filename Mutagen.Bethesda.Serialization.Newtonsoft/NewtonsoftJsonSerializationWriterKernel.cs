@@ -229,13 +229,10 @@ public class NewtonsoftJsonSerializationWriterKernel : ISerializationWriterKerne
         {
             writer.Writer.WriteValue(string.Empty);
         }
-        else if (FloatSerialization.NeedsBitForm(item.Value))
-        {
-            writer.Writer.WriteValue(FloatSerialization.ToBitForm(item.Value));
-        }
         else
         {
-            writer.Writer.WriteValue(item.Value);
+            // Its text from JsonScalarText, the public form of what is written here
+            writer.Writer.WriteRawValue(JsonScalarText.Format(item.Value));
         }
     }
 
@@ -247,14 +244,10 @@ public class NewtonsoftJsonSerializationWriterKernel : ISerializationWriterKerne
         {
             writer.Writer.WriteValue(string.Empty);
         }
-        else if (FloatSerialization.NeedsBitForm(item.Value))
-        {
-            writer.Writer.WriteValue(FloatSerialization.ToBitForm(item.Value));
-        }
         else
         {
-            // The double holding the same number: written exactly, read back exactly (C222)
-            writer.Writer.WriteValue(FloatSerialization.ToDouble(item.Value));
+            // The double holding the same number: written exactly, read back exactly (C222); JsonScalarText.Format
+            writer.Writer.WriteRawValue(JsonScalarText.Format(item.Value));
         }
     }
 
@@ -266,13 +259,10 @@ public class NewtonsoftJsonSerializationWriterKernel : ISerializationWriterKerne
         {
             writer.Writer.WriteValue(string.Empty);
         }
-        else if (FloatSerialization.NeedsBitForm(item.Value))
-        {
-            writer.Writer.WriteValue(FloatSerialization.ToBitForm(item.Value));
-        }
         else
         {
-            writer.Writer.WriteValue(item.Value);
+            // Its text from JsonScalarText, the public form of what is written here
+            writer.Writer.WriteRawValue(JsonScalarText.Format(item.Value));
         }
     }
 
@@ -506,27 +496,27 @@ public class NewtonsoftJsonSerializationWriterKernel : ISerializationWriterKerne
         }
         
         writer.Writer.WriteStartObject();
-        writer.Writer.WritePropertyName("TargetLanguage");
+        writer.Writer.WritePropertyName(TranslatedStringNames.TargetLanguage);
         writer.Writer.WriteValue(item.TargetLanguage.ToStringFast());
 
         if (item.NumLanguages <= 1)
         {
             if (item.String is { } str)
             {
-                writer.Writer.WritePropertyName("Value");
+                writer.Writer.WritePropertyName(TranslatedStringNames.Value);
                 writer.Writer.WriteValue($"{str}");
             }
         }
         else
         {
-            writer.Writer.WritePropertyName("Values");
+            writer.Writer.WritePropertyName(TranslatedStringNames.Values);
             writer.Writer.WriteStartArray();
             foreach (var entry in item)
             {
                 writer.Writer.WriteStartObject();
-                writer.Writer.WritePropertyName("Language");
+                writer.Writer.WritePropertyName(TranslatedStringNames.Language);
                 writer.Writer.WriteValue(entry.Key.ToStringFast());
-                writer.Writer.WritePropertyName("String");
+                writer.Writer.WritePropertyName(TranslatedStringNames.String);
                 writer.Writer.WriteValue(entry.Value);
                 writer.Writer.WriteEndObject();
             }
