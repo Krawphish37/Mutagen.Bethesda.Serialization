@@ -4,8 +4,11 @@
         <GitVersion_NuGetVersion Condition="'$(GitVersion_NuGetVersion)' == ''">0.0.0</GitVersion_NuGetVersion>
     </PropertyGroup>
 
-    <!-- Clear NuGet packages after successful build for projects that generate packages -->
-    <Target Name="ClearLocalNuGetPackages" AfterTargets="Build" Condition="'$(GeneratePackageOnBuild)' == 'true'">
+    <!-- Clear NuGet packages after successful build for projects that generate packages.
+         Our fork (C46): off unless asked for with -p:ClearLocalNuGetPackages=true. It deleted every version of the
+         Serialization packages from the user's global NuGet cache on each build, so other projects on this PC
+         (SFSearch, the patcher's tools) had to restore them again from the feed. -->
+    <Target Name="ClearLocalNuGetPackages" AfterTargets="Build" Condition="'$(GeneratePackageOnBuild)' == 'true' AND '$(ClearLocalNuGetPackages)' == 'true'">
         <PropertyGroup>
             <NuGetPackagesPath>$(USERPROFILE)\.nuget\packages</NuGetPackagesPath>
             <!-- Use PackageId if specified, otherwise use AssemblyName, otherwise use MSBuildProjectName -->
