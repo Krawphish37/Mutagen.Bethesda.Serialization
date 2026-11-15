@@ -85,4 +85,15 @@ public class GeneratedStarfieldTests : IClassFixture<GeneratedStarfield>
             }
         }
     }
+
+    // C59 W13: a package writes and reads its ProcedureTreeDataOrder note
+    [Fact]
+    public void PackageCarriesItsOrder()
+    {
+        var package = _gen.Get("Package_Serializations.g.cs");
+        package.ShouldContain("RoundTripNotesHelper.ProcedureTreeDataOrderToString(Mutagen.Bethesda.Starfield.PackageMixIn.GetProcedureTreeDataOrder(item))");
+        package.ShouldContain("kernel.WriteString(writer, Mutagen.Bethesda.Serialization.RoundTripNoteNames.ProcedureTreeDataOrder,");
+        package.ShouldContain("case Mutagen.Bethesda.Serialization.RoundTripNoteNames.ProcedureTreeDataOrder:");
+        package.ShouldContain("procedureTreeDataOrderPackage.ProcedureTreeDataOrder = procedureTreeDataOrder;");
+    }
 }

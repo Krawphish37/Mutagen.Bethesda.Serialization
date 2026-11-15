@@ -73,4 +73,23 @@ public class NoteNameTests
         }
         TranslatedStringNames.IsTranslatedStringObject(objects[0].Select(p => p.Key)).ShouldBeTrue();
     }
+
+    // C59 W13: the package order note's text, and when it is left out (by index as signed and as unsigned bytes)
+    [Theory]
+    [InlineData(new sbyte[] { 0, 1, 2 }, null)]
+    [InlineData(new sbyte[] { 0 }, null)]
+    [InlineData(new sbyte[0], null)]
+    [InlineData(new sbyte[] { 2, 0, 1 }, "2,0,1")]
+    [InlineData(new sbyte[] { 1, -1 }, "1,-1")]
+    [InlineData(new sbyte[] { -1, 1 }, "-1,1")]
+    [InlineData(new sbyte[] { 0, 0 }, "0,0")]
+    [InlineData(new sbyte[] { -128, 127 }, "-128,127")]
+    public void ProcedureTreeDataOrderText(sbyte[] order, string? text)
+    {
+        RoundTripNotesHelper.ProcedureTreeDataOrderToString(order).ShouldBe(text);
+        if (text != null) RoundTripNotesHelper.ProcedureTreeDataOrderFromString(text).ShouldBe(order);
+        RoundTripNotesHelper.ProcedureTreeDataOrderToString(null).ShouldBeNull();
+        RoundTripNotesHelper.ProcedureTreeDataOrderFromString(null).ShouldBeNull();
+        RoundTripNotesHelper.ProcedureTreeDataOrderFromString("").ShouldBeNull();
+    }
 }

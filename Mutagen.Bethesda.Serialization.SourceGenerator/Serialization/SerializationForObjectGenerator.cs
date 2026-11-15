@@ -108,6 +108,31 @@ public class SerializationForObjectGenerator
     }
 
     /// <summary>
+    /// The package note: the order of its data inputs' names and flags after the procedure tree as read
+    /// (Package.ProcedureTreeDataOrder, C51), written only when it isn't by index (C59, W13)
+    /// </summary>
+    private const string ProcedureTreeDataOrderName = "ProcedureTreeDataOrder";
+
+    /// <summary>
+    /// On a package, its namespace when the Mutagen the code is generated against has PackageMixIn.GetProcedureTreeDataOrder
+    /// and a public setter of Package.ProcedureTreeDataOrder (Skyrim, Fallout4, Starfield)
+    /// </summary>
+    private static string? PackageProcedureTreeDataOrderNamespace(CompilationUnit compilation, LoquiTypeSet obj)
+    {
+        if (obj.Getter?.Name != "IPackageGetter" || obj.Getter.ContainingNamespace is not { } ns) return null;
+        var name = ns.ToDisplayString();
+        var mixIn = compilation.Compilation.GetTypeByMetadataName(name + ".PackageMixIn");
+        var package = compilation.Compilation.GetTypeByMetadataName(name + ".Package");
+        return mixIn != null
+               && mixIn.GetMembers("GetProcedureTreeDataOrder").Length > 0
+               && package != null
+               && package.GetMembers(ProcedureTreeDataOrderName).OfType<IPropertySymbol>()
+                   .Any(p => p.SetMethod is { DeclaredAccessibility: Accessibility.Public })
+            ? name
+            : null;
+    }
+
+    /// <summary>
     /// Whether the Mutagen the code is generated against has all the given FileLayoutMixIn methods
     /// </summary>
     private static bool HasFileLayoutMembers(CompilationUnit compilation, params string[] names)
@@ -556,6 +581,22 @@ public class SerializationForObjectGenerator
                     }
                 }
 
+                if (PackageProcedureTreeDataOrderNamespace(compilation, obj) is { } packageNamespaceForRead)
+                {
+                    generatedForProperty = true;
+                    sb.AppendLine($"case {NoteName(ProcedureTreeDataOrderName)}:");
+                    using (sb.IncreaseDepth())
+                    {
+                        sb.AppendLine("var procedureTreeDataOrder = Mutagen.Bethesda.Serialization.Utility.RoundTripNotesHelper.ProcedureTreeDataOrderFromString(kernel.ReadString(reader));");
+                        sb.AppendLine($"if (obj is {packageNamespaceForRead}.Package procedureTreeDataOrderPackage)");
+                        using (sb.CurlyBrace())
+                        {
+                            sb.AppendLine("procedureTreeDataOrderPackage.ProcedureTreeDataOrder = procedureTreeDataOrder;");
+                        }
+                        sb.AppendLine("break;");
+                    }
+                }
+
                 if (CarriesEmptyTopLevelGroups(compilation, isMod))
                 {
                     generatedForProperty = true;
@@ -883,6 +924,15 @@ public class SerializationForObjectGenerator
                 using (sbInternal.CurlyBrace())
                 {
                     sbInternal.AppendLine($"kernel.WriteString(writer, {NoteName(ChildGroupLayoutName)}, childGroupLayout, default, checkDefaults: false);");
+                }
+            }
+
+            if (PackageProcedureTreeDataOrderNamespace(compilation, obj) is { } packageNamespace)
+            {
+                sbInternal.AppendLine($"if (metaData.RoundTripNotes && Mutagen.Bethesda.Serialization.Utility.RoundTripNotesHelper.ProcedureTreeDataOrderToString({packageNamespace}.PackageMixIn.GetProcedureTreeDataOrder(item)) is {{ }} procedureTreeDataOrder)");
+                using (sbInternal.CurlyBrace())
+                {
+                    sbInternal.AppendLine($"kernel.WriteString(writer, {NoteName(ProcedureTreeDataOrderName)}, procedureTreeDataOrder, default, checkDefaults: false);");
                 }
             }
 

@@ -2,7 +2,7 @@ namespace Mutagen.Bethesda.Serialization;
 
 /// <summary>
 /// The names the round-trip notes are written under. A note is not a value of the object: it is what Mutagen kept about
-/// how a record or a mod was stored (RoundTripMixIn, FileLayoutMixIn, CellMixIn), written beside the fields
+/// how a record or a mod was stored (RoundTripMixIn, FileLayoutMixIn, CellMixIn, PackageMixIn), written beside the fields
 /// so that a plugin rebuilt from the output writes back like its file. Each is written only when the object has one, and
 /// none when <see cref="SerializationMetaData.RoundTripNotes"/> is off.<br/>
 /// The generated serializers write and read the notes under exactly these names, so a reader of the output can tell
@@ -45,6 +45,13 @@ public static class RoundTripNoteNames
     /// </summary>
     public const string ChildGroupLayout = "ChildGroupLayout";
 
+    /// <summary>
+    /// On a package: the order of its data inputs' names and flags after the procedure tree (UNAM, BNAM, PNAM) as read,
+    /// when it is not by index (Package.ProcedureTreeDataOrder; C51, C59). The text and when it is written are
+    /// <see cref="Utility.RoundTripNotesHelper.ProcedureTreeDataOrderToString"/>'s.
+    /// </summary>
+    public const string ProcedureTreeDataOrder = "ProcedureTreeDataOrder";
+
     /// <summary>On a mod: the empty top-level groups its file had (FileLayoutMixIn's opaque value; C215)</summary>
     public const string EmptyTopLevelGroups = "EmptyTopLevelGroups";
 
@@ -66,7 +73,8 @@ public static class RoundTripNoteNames
     /// <summary>
     /// The notes a record can carry, written among its fields: <see cref="HeaderFormIdAsStored"/>,
     /// <see cref="OwnLinkFormsAsStored"/>, <see cref="GroupLabelFormsAsStored"/>, <see cref="SubrecordOrder"/>,
-    /// <see cref="OriginalCompressedData"/>, and on a cell <see cref="ChildGroupLayout"/>
+    /// <see cref="OriginalCompressedData"/>, and on a cell <see cref="ChildGroupLayout"/>, on a package
+    /// <see cref="ProcedureTreeDataOrder"/>
     /// </summary>
     public static IReadOnlySet<string> RecordNotes { get; } = new HashSet<string>(StringComparer.Ordinal)
     {
@@ -76,6 +84,7 @@ public static class RoundTripNoteNames
         SubrecordOrder,
         OriginalCompressedData,
         ChildGroupLayout,
+        ProcedureTreeDataOrder,
     };
 
     /// <summary>

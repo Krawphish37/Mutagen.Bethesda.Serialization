@@ -45,4 +45,37 @@ public static class RoundTripNotesHelper
         if (text.Length == 0) return Array.Empty<FormKey>();
         return text.Split(',').Select(s => FormKey.Factory(s)).ToArray();
     }
+
+    /// <summary>
+    /// The text of a package's <c>ProcedureTreeDataOrder</c> note (C51, C59): the order its data inputs' names and flags
+    /// (UNAM, BNAM, PNAM) had after the procedure tree as read, the indexes as signed decimals joined by commas
+    /// ("2,0,-1"). Null, so that no note is written, when there is no order or it is by index both ways: ascending as
+    /// signed and as unsigned bytes (e.g. 0,1,3; not 1,-1 nor -1,1). Without an order Mutagen writes the inputs by index,
+    /// as unsigned bytes for Starfield and as signed ones for Skyrim and Fallout4; an order ascending both ways is that
+    /// order for every game, so leaving it out changes nothing written. Any other order is written, also one that does
+    /// not hold the package's indexes (Mutagen's write passes over it as it does over the one read).
+    /// </summary>
+    public static string? ProcedureTreeDataOrderToString(IReadOnlyList<sbyte>? order)
+    {
+        if (order == null) return null;
+        bool byIndex = true;
+        for (int i = 1; i < order.Count; i++)
+        {
+            if (order[i - 1] >= order[i] || (byte)order[i - 1] >= (byte)order[i])
+            {
+                byIndex = false;
+                break;
+            }
+        }
+        if (byIndex) return null;
+        return string.Join(",", order.Select(i => i.ToString(CultureInfo.InvariantCulture)));
+    }
+
+    /// <summary>The order written by <see cref="ProcedureTreeDataOrderToString"/>; null for no text</summary>
+    /// <exception cref="FormatException">An index is not a signed byte</exception>
+    public static IReadOnlyList<sbyte>? ProcedureTreeDataOrderFromString(string? text)
+    {
+        if (string.IsNullOrEmpty(text)) return null;
+        return text.Split(',').Select(s => sbyte.Parse(s, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture)).ToArray();
+    }
 }
