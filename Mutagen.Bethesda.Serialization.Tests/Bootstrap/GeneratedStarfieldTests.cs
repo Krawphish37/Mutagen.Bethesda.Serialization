@@ -1,6 +1,8 @@
+using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Mutagen.Bethesda.Serialization.Tests.SourceGenerators;
 using Shouldly;
+using Xunit.Abstractions;
 
 namespace Mutagen.Bethesda.Serialization.SourceGenerator.Tests.Bootstrap;
 
@@ -44,9 +46,12 @@ public class GeneratedStarfieldTests : IClassFixture<GeneratedStarfield>
 {
     private readonly GeneratedStarfield _gen;
 
-    public GeneratedStarfieldTests(GeneratedStarfield gen)
+    private readonly ITestOutputHelper _output;
+
+    public GeneratedStarfieldTests(GeneratedStarfield gen, ITestOutputHelper output)
     {
         _gen = gen;
+        _output = output;
     }
 
     [Fact]
@@ -145,5 +150,57 @@ public class GeneratedStarfieldTests : IClassFixture<GeneratedStarfield>
         _gen.Get("Weapon_Serializations.g.cs").ShouldContain("var ret = Mutagen.Bethesda.Starfield.StarfieldMajorRecord_Serialization.BuildFieldDefaults();");
         _gen.Get("StarfieldMajorRecord_Serializations.g.cs").ShouldNotContain("ret[\"FormVersion\"]");
         _gen.Get("StarfieldSerializationRegistry.g.cs").ShouldContain("[typeof(global::Mutagen.Bethesda.Starfield.BookTeachesNothing)] = static () => global::Mutagen.Bethesda.Starfield.BookTeachesNothing_Serialization.FieldDefaults,");
+    }
+
+    // S151: the default of a generic class's field (ObjectTemplate<T>.AddonIndex = -1) is compared with and listed
+    [Fact]
+    public void GenericClassDefaults()
+    {
+        var template = _gen.Get("ObjectTemplate_Serializations.g.cs");
+        template.ShouldContain("kernel.WriteInt16(writer, \"AddonIndex\", item.AddonIndex, Mutagen.Bethesda.Starfield.ObjectTemplate<T>.AddonIndexDefault);");
+        var fieldDefaults = template.Split('\n').FirstOrDefault(l => l.Contains("FieldDefaults<T>()"));
+        _output.WriteLine(fieldDefaults ?? "(no FieldDefaults<T>)");
+        fieldDefaults.ShouldNotBeNull();
+        fieldDefaults.ShouldContain("public static IReadOnlyDictionary<string, object?> FieldDefaults<T>() where T :");
+        fieldDefaults.ShouldContain("=> FieldDefaultsOf<T>.Value;");
+        template.ShouldContain("ret[\"AddonIndex\"] = Mutagen.Bethesda.Starfield.ObjectTemplate<T>.AddonIndexDefault;");
+        var registry = _gen.Get("StarfieldSerializationRegistry.g.cs");
+        registry.ShouldContain("[typeof(global::Mutagen.Bethesda.Starfield.ObjectTemplate<global::Mutagen.Bethesda.Starfield.Weapon.Property>)] = static () => global::Mutagen.Bethesda.Starfield.ObjectTemplate_Serialization.FieldDefaults<global::Mutagen.Bethesda.Starfield.Weapon.Property>(),");
+        registry.ShouldContain("[typeof(global::Mutagen.Bethesda.Starfield.ObjectTemplate<global::Mutagen.Bethesda.Starfield.Weapon.Property>)] = static (w, i, k, m) => global::Mutagen.Bethesda.Starfield.ObjectTemplate_Serialization.Serialize<TKernel, TWriteObject, global::Mutagen.Bethesda.Starfield.Weapon.Property>(w, (global::Mutagen.Bethesda.Starfield.IObjectTemplateGetter<global::Mutagen.Bethesda.Starfield.Weapon.Property>)i, k, m),");
+    }
+
+    // S151 census: every Mutagen Starfield class field with a {Name}Default of its own (48 in fixes.19, -1, 1, 0.5f,
+    // uint.MaxValue, ...) is compared with that default where the generated code writes it, and listed in FieldDefaults
+    // with it; none falls back to default(T)
+    [Fact]
+    public void EveryOwnDefaultIsComparedAndListed()
+    {
+        var census = 0;
+        var failures = new List<string>();
+        foreach (var type in typeof(Mutagen.Bethesda.Starfield.StarfieldMod).Assembly.GetTypes()
+                     .Where(t => t.IsClass && t.Namespace == "Mutagen.Bethesda.Starfield")
+                     .OrderBy(t => t.FullName))
+        {
+            foreach (var field in type.GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
+                         .Where(f => f.IsInitOnly && f.Name.EndsWith("Default") && f.Name.Length > "Default".Length))
+            {
+                var name = field.Name.Substring(0, field.Name.Length - "Default".Length);
+                if (type.GetProperty(name, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly) == null) continue;
+                var plain = type.Name.Split('`')[0];
+                if (!_gen.Sources.TryGetValue($"{plain}_Serializations.g.cs", out var source)) continue;
+                var typeText = type.IsGenericTypeDefinition
+                    ? $"{type.Namespace}.{plain}<{string.Join(", ", type.GetGenericArguments().Select(a => a.Name))}>"
+                    : $"{type.Namespace}.{plain}";
+                var defaultText = $"{typeText}.{field.Name}";
+                census++;
+                var value = type.IsGenericTypeDefinition ? "(generic)" : field.GetValue(null)?.ToString();
+                _output.WriteLine($"{typeText}.{name} = {value}");
+                if (!source.Contains($"ret[\"{name}\"] = {defaultText};")) failures.Add($"{typeText}.{name}: not listed with {defaultText}");
+                if (!source.Contains($", item.{name}, {defaultText})")) failures.Add($"{typeText}.{name}: not compared with {defaultText}");
+            }
+        }
+        _output.WriteLine($"{census} fields with a default of their own");
+        census.ShouldBeGreaterThan(40);
+        failures.ShouldBeEmpty();
     }
 }

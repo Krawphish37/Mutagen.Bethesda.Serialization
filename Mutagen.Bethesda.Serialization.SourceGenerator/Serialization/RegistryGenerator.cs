@@ -94,11 +94,91 @@ public class RegistryGenerator
 
     private static string Full(ITypeSymbol symbol) => symbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
+    /// <summary>
+    /// A class the registry lists: a plain one, or a generic one closed with the arguments the mod's objects use it with
+    /// (ObjectTemplate&lt;Weapon.Property&gt;). Args is ", A" for the generated methods' extra generic arguments.
+    /// </summary>
+    private sealed record Entry(LoquiTypeSet TypeSet, string Direct, string? Getter, string? Setter, string Cast, string Args);
+
+    private static ITypeSymbol? Close(ITypeSymbol? symbol, ImmutableArray<ITypeSymbol> args) =>
+        symbol is INamedTypeSymbol { TypeArguments.Length: > 0 } named && named.OriginalDefinition.TypeParameters.Length == args.Length
+            ? named.OriginalDefinition.Construct(args.ToArray())
+            : null;
+
+    private static bool IsClosed(ITypeSymbol t) => t switch
+    {
+        ITypeParameterSymbol => false,
+        INamedTypeSymbol n => n.TypeArguments.All(IsClosed),
+        IArrayTypeSymbol a => IsClosed(a.ElementType),
+        _ => true,
+    };
+
+    /// <summary>Every constructed generic type in a type (its arguments and array elements included)</summary>
+    private static IEnumerable<INamedTypeSymbol> Constructed(ITypeSymbol t)
+    {
+        if (t is IArrayTypeSymbol a)
+        {
+            foreach (var x in Constructed(a.ElementType)) yield return x;
+            yield break;
+        }
+        if (t is not INamedTypeSymbol n || n.TypeArguments.Length == 0) yield break;
+        yield return n;
+        foreach (var arg in n.TypeArguments)
+        {
+            foreach (var x in Constructed(arg)) yield return x;
+        }
+    }
+
+    /// <summary>
+    /// The generic classes of the mod's objects, closed with the arguments the objects' properties use them with: a
+    /// generic class's generated serializer takes its arguments, so the registry lists each closed class it can name
+    /// </summary>
+    private IEnumerable<Entry> ClosedGenerics(IEnumerable<LoquiTypeSet> related, LoquiMapping mapping)
+    {
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var typeSet in related)
+        {
+            foreach (var holder in typeSet.GetAll())
+            {
+                foreach (var prop in holder.GetMembers().OfType<IPropertySymbol>())
+                {
+                    if (prop.IsStatic) continue;
+                    foreach (var n in Constructed(prop.Type))
+                    {
+                        if (!IsClosed(n)) continue;
+                        if (!mapping.TryGetTypeSet(n.OriginalDefinition, out var generic)
+                            && !mapping.TryGetTypeSet(n, out generic)) continue;
+                        if (_blacklist.ShouldSkip(generic)) continue;
+                        if (generic.Direct is not INamedTypeSymbol { IsAbstract: false, TypeArguments.Length: > 0 }) continue;
+                        if (generic.Getter == null) continue;
+                        if (_objectTypeTester.IsModObject(generic.Getter)) continue;
+                        if (_objectTypeTester.IsGroup(generic.Setter) || _objectTypeTester.IsGroup(generic.Direct)) continue;
+                        var args = n.TypeArguments;
+                        var direct = Close(generic.Direct, args);
+                        if (direct == null) continue;
+                        var full = Full(direct);
+                        if (!seen.Add(full)) continue;
+                        var getter = Close(generic.Getter, args);
+                        var setter = Close(generic.Setter, args);
+                        yield return new Entry(
+                            generic,
+                            full,
+                            getter == null ? null : Full(getter),
+                            setter == null ? null : Full(setter),
+                            Full(getter ?? setter ?? direct),
+                            ", " + string.Join(", ", args.Select(Full)));
+                    }
+                }
+            }
+        }
+    }
+
     private static bool IsGeneric(ITypeSymbol? symbol) => symbol is INamedTypeSymbol { TypeArguments.Length: > 0 };
 
     /// <summary>
     /// The objects with a generated Serialize and Deserialize of the plain shape: concrete, not generic, not a mod or a
-    /// group (a mod's and a group's serializers take other arguments)
+    /// group (a mod's and a group's serializers take other arguments). Generic classes are listed closed
+    /// (<see cref="ClosedGenerics"/>).
     /// </summary>
     private bool Registrable(LoquiTypeSet typeSet)
     {
@@ -118,9 +198,17 @@ public class RegistryGenerator
         CustomizationSpecifications customization)
     {
         var cancel = context.CancellationToken;
-        var objects = _accumulator.GetRelatedObjects(mapping, modType, customization, cancel)
+        var related = _accumulator.GetRelatedObjects(mapping, modType, customization, cancel);
+        var objects = related
             .Where(Registrable)
-            .Select(t => (TypeSet: t, Direct: Full(t.Direct!)))
+            .Select(t => new Entry(
+                t,
+                Full(t.Direct!),
+                t.Getter == null ? null : Full(t.Getter),
+                t.Setter == null ? null : Full(t.Setter),
+                Full(t.SerializeSymbol),
+                string.Empty))
+            .Concat(ClosedGenerics(related, mapping))
             .OrderBy(t => t.Direct, StringComparer.Ordinal)
             .ToArray();
 
@@ -174,9 +262,8 @@ public class RegistryGenerator
             {
                 foreach (var o in objects)
                 {
-                    foreach (var t in new[] { o.TypeSet.Direct, o.TypeSet.Getter, o.TypeSet.Setter }
+                    foreach (var t in new[] { o.Direct, o.Getter, o.Setter }
                                  .NotNull()
-                                 .Select(Full)
                                  .Distinct())
                     {
                         sb.AppendLine($"[typeof({t})] = typeof({o.Direct}),");
@@ -206,7 +293,9 @@ public class RegistryGenerator
                 foreach (var o in objects)
                 {
                     if (!_serializationNaming.TryGetSerializationItems(o.TypeSet.GetAny(), out var items)) continue;
-                    sb.AppendLine($"[typeof({o.Direct})] = static () => global::{items.Namespace}.{items.SerializationHousingClassName}.FieldDefaults,");
+                    sb.AppendLine(o.Args.Length == 0
+                        ? $"[typeof({o.Direct})] = static () => global::{items.Namespace}.{items.SerializationHousingClassName}.FieldDefaults,"
+                        : $"[typeof({o.Direct})] = static () => global::{items.Namespace}.{items.SerializationHousingClassName}.FieldDefaults<{o.Args.Substring(2)}>(),");
                 }
             }
             sb.AppendLine();
@@ -241,7 +330,7 @@ public class RegistryGenerator
                     {
                         cancel.ThrowIfCancellationRequested();
                         if (!_serializationNaming.TryGetSerializationItems(o.TypeSet.GetAny(), out var items)) continue;
-                        sb.AppendLine($"[typeof({o.Direct})] = static (w, i, k, m) => global::{items.SerializationCall()}<TKernel, TWriteObject>(w, ({Full(o.TypeSet.SerializeSymbol)})i, k, m),");
+                        sb.AppendLine($"[typeof({o.Direct})] = static (w, i, k, m) => global::{items.SerializationCall()}<TKernel, TWriteObject{o.Args}>(w, ({o.Cast})i, k, m),");
                     }
                 }
             }
@@ -261,7 +350,7 @@ public class RegistryGenerator
                     {
                         cancel.ThrowIfCancellationRequested();
                         if (!_serializationNaming.TryGetSerializationItems(o.TypeSet.GetAny(), out var items)) continue;
-                        sb.AppendLine($"[typeof({o.Direct})] = static (r, k, m) => SerializationRegistry.AsObject(global::{items.DeserializationCall()}<TReadObject>(r, k, m)),");
+                        sb.AppendLine($"[typeof({o.Direct})] = static (r, k, m) => SerializationRegistry.AsObject(global::{items.DeserializationCall()}<TReadObject{o.Args}>(r, k, m)),");
                     }
                 }
             }

@@ -28,7 +28,7 @@ internal static class SfSearchWay
     public static bool Knows(string typeName) => Asm.GetType($"Mutagen.Bethesda.Fallout4.{typeName}_Serialization", false) != null;
 
     /// <summary>Knows, for a class of any namespace (the generated class sits in its object's namespace)</summary>
-    public static bool Knows(Type type) => Asm.GetType($"{type.Namespace}.{type.Name}_Serialization", false) != null;
+    public static bool Knows(Type type) => Asm.GetType($"{type.Namespace}.{type.Name.Split('`')[0]}_Serialization", false) != null;
 
     private static (MethodInfo Ser, MethodInfo Des) For(string n)
     {
@@ -122,12 +122,18 @@ public class RegistryTests
             same.ShouldBe(type);
             Registry.TryGetClassType(type.FullName!, out var byFull).ShouldBeTrue();
             byFull.ShouldBe(type);
-            Registry.TryGetClassType(type.Name, out var byName).ShouldBeTrue();
-            byName.ShouldBe(type);
-            LoquiRegistration.TryGetRegister(type, out var registration).ShouldBeTrue(type.Name);
-            Registry.TryGetClassType(registration!.GetterType, out var byGetter).ShouldBeTrue();
+            if (!type.IsGenericType)
+            {
+                // A closed generic class (ObjectTemplate<Weapon.Property>) has no plain name of its own
+                Registry.TryGetClassType(type.Name, out var byName).ShouldBeTrue();
+                byName.ShouldBe(type);
+            }
+            LoquiRegistration.TryGetRegister(type.IsGenericType ? type.GetGenericTypeDefinition() : type, out var registration).ShouldBeTrue(type.Name);
+            var getter = registration!.GetterType.IsGenericTypeDefinition ? registration.GetterType.MakeGenericType(type.GetGenericArguments()) : registration.GetterType;
+            var setter = registration.SetterType.IsGenericTypeDefinition ? registration.SetterType.MakeGenericType(type.GetGenericArguments()) : registration.SetterType;
+            Registry.TryGetClassType(getter, out var byGetter).ShouldBeTrue();
             byGetter.ShouldBe(type);
-            Registry.TryGetClassType(registration.SetterType, out var bySetter).ShouldBeTrue();
+            Registry.TryGetClassType(setter, out var bySetter).ShouldBeTrue();
             bySetter.ShouldBe(type);
         }
         // Every major record class of the game is there

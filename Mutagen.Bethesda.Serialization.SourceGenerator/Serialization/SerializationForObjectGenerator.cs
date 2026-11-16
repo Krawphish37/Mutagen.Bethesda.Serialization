@@ -1025,23 +1025,46 @@ public class SerializationForObjectGenerator
         PropertyCollection properties,
         SerializationGenerics generics)
     {
-        if (generics.ExtraWriterGenerics is { Count: > 0 }) return;
+        // Groups have their own serialization (not per field defaults); a group's generic arguments are its records
+        if (_modObjectTypeTester.IsGroup(obj.Setter) || _modObjectTypeTester.IsGroup(obj.Direct)) return;
+
+        // A class with generic arguments (ObjectTemplate<T>) gets FieldDefaults<T>(): its defaults are the class's
+        // statics (ObjectTemplate<T>.AddonIndexDefault), which need its arguments (S151)
+        var extra = generics.ExtraWriterGenerics is { Count: > 0 } g ? g : null;
+        var genericArgs = extra == null ? string.Empty : $"<{string.Join(", ", extra)}>";
+        var wheres = extra == null ? string.Empty : " " + string.Join(" ", generics.ExtraWriterWheres ?? new List<string>());
+
         string? baseCall = null;
         if (baseType != null
-            && baseType is not INamedTypeSymbol { TypeArguments.Length: > 0 }
             && _loquiSerializationNaming.TryGetSerializationItems(baseType, out var baseItems))
         {
-            baseCall = $"{baseItems.Namespace}.{baseItems.SerializationHousingClassName}.BuildFieldDefaults()";
+            var baseArgs = baseType is INamedTypeSymbol { TypeArguments.Length: > 0 } namedBase
+                ? $"<{string.Join(", ", namedBase.TypeArguments)}>"
+                : string.Empty;
+            baseCall = $"{baseItems.Namespace}.{baseItems.SerializationHousingClassName}.BuildFieldDefaults{baseArgs}()";
         }
 
         sb.AppendLine("/// <summary>");
         sb.AppendLine("/// The value each field is left out at when it holds it (unless the writer kernel writes defaults), by field name:");
         sb.AppendLine("/// the fields compared with a default, of this class and its base classes");
         sb.AppendLine("/// </summary>");
-        sb.AppendLine("public static IReadOnlyDictionary<string, object?> FieldDefaults => _fieldDefaults ??= BuildFieldDefaults();");
-        sb.AppendLine("private static IReadOnlyDictionary<string, object?>? _fieldDefaults;");
+        if (extra == null)
+        {
+            sb.AppendLine("public static IReadOnlyDictionary<string, object?> FieldDefaults => _fieldDefaults ??= BuildFieldDefaults();");
+            sb.AppendLine("private static IReadOnlyDictionary<string, object?>? _fieldDefaults;");
+        }
+        else
+        {
+            sb.AppendLine($"public static IReadOnlyDictionary<string, object?> FieldDefaults{genericArgs}(){wheres} => FieldDefaultsOf{genericArgs}.Value;");
+            sb.AppendLine();
+            sb.AppendLine($"private static class FieldDefaultsOf{genericArgs}{wheres}");
+            using (sb.CurlyBrace())
+            {
+                sb.AppendLine($"public static readonly IReadOnlyDictionary<string, object?> Value = BuildFieldDefaults{genericArgs}();");
+            }
+        }
         sb.AppendLine();
-        sb.AppendLine("internal static Dictionary<string, object?> BuildFieldDefaults()");
+        sb.AppendLine($"internal static Dictionary<string, object?> BuildFieldDefaults{genericArgs}(){wheres}");
         using (sb.CurlyBrace())
         {
             sb.AppendLine($"var ret = {baseCall ?? "new Dictionary<string, object?>()"};");

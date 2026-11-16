@@ -74,10 +74,19 @@ public static class SerializationRegistry
 {
     /// <summary>
     /// The class an object is serialized as: its Loqui registration's class (an overlay is written as the class it is
-    /// read as, e.g. WeaponBinaryOverlay as Weapon), or its own type for an object that isn't a Loqui object
+    /// read as, e.g. WeaponBinaryOverlay as Weapon; a generic class closed with the object's arguments, e.g.
+    /// ObjectTemplate&lt;Weapon.Property&gt;), or its own type for an object that isn't a Loqui object
     /// </summary>
-    public static Type ClassTypeOf(object item) =>
-        item is ILoquiObject loqui ? loqui.Registration.ClassType : item.GetType();
+    public static Type ClassTypeOf(object item)
+    {
+        if (item is not ILoquiObject loqui) return item.GetType();
+        var classType = loqui.Registration.ClassType;
+        if (!classType.IsGenericTypeDefinition) return classType;
+        // A generic Loqui class registers its definition (ObjectTemplate<>): close it with the object's own arguments
+        // (an overlay ObjectTemplateBinaryOverlay<Weapon.Property> has the same ones)
+        var args = item.GetType().GetGenericArguments();
+        return args.Length == classType.GetGenericArguments().Length ? classType.MakeGenericType(args) : item.GetType();
+    }
 
     /// <summary>The classes by full name, and by plain name where no two classes share it</summary>
     public static Dictionary<string, Type> NamesOf(IEnumerable<Type> classes)
