@@ -11,20 +11,40 @@ namespace Mutagen.Bethesda.Serialization.Newtonsoft;
 
 public class JsonWritingUnit : IDisposable, IContainStreamPackage
 {
-    public JsonTextWriter Writer { get; }
+    private readonly StreamWriter _streamWriter;
+
+    /// <summary>The JSON writer; a new one after each <see cref="Reset"/></summary>
+    public JsonTextWriter Writer { get; private set; }
 
     public StreamPackage StreamPackage { get; }
-    
+
     public JsonWritingUnit(
         StreamPackage stream)
     {
         StreamPackage = stream;
-        var sw = new StreamWriter(stream.Stream, leaveOpen: true);
-        Writer = new JsonTextWriter(sw)
+        _streamWriter = new StreamWriter(stream.Stream, leaveOpen: true);
+        Writer = NewWriter(_streamWriter);
+    }
+
+    private static JsonTextWriter NewWriter(TextWriter textWriter) =>
+        new(textWriter)
         {
             Formatting = Formatting.Indented,
             Culture = TargetCulture.English
         };
+
+    /// <summary>
+    /// Starts the unit over, keeping its buffers (C59, V4): what was written is dropped, the stream is emptied (it must
+    /// be seekable, e.g. a MemoryStream) and a new JSON writer starts on the same text writer. A unit used for object
+    /// after object this way writes each as a new unit would, without a new StreamWriter and its buffers for each. It
+    /// also clears a unit an error left in the middle of an object.
+    /// </summary>
+    public void Reset()
+    {
+        Writer.Flush();
+        StreamPackage.Stream.SetLength(0);
+        StreamPackage.Stream.Position = 0;
+        Writer = NewWriter(_streamWriter);
     }
 
     public void Dispose()
