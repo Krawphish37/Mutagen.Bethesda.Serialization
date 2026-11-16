@@ -130,46 +130,122 @@ public class RegistryGenerator
     }
 
     /// <summary>
-    /// The generic classes of the mod's objects, closed with the arguments the objects' properties use them with: a
-    /// generic class's generated serializer takes its arguments, so the registry lists each closed class it can name
+    /// The generic classes of the mod's objects, closed with every argument list the mod's objects can hold them with: a
+    /// generic class's generated serializer takes its arguments, so the registry lists each closed class it can name.
+    /// Found from the objects' properties, then from each closed class found: its own properties (ObjectTemplate&lt;T&gt;
+    /// holds AObjectModProperty&lt;T&gt;), and the generic classes that derive from it, closed to match
+    /// (AObjectModProperty&lt;Weapon.Property&gt; gives ObjectModIntProperty&lt;Weapon.Property&gt;, ...). An abstract
+    /// closed class is not listed itself but leads to its derived ones (C76).
     /// </summary>
-    private IEnumerable<Entry> ClosedGenerics(IEnumerable<LoquiTypeSet> related, LoquiMapping mapping)
+    private IEnumerable<Entry> ClosedGenerics(IReadOnlyCollection<LoquiTypeSet> related, LoquiMapping mapping)
     {
-        var seen = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var typeSet in related)
+        var relatedSet = related.ToImmutableHashSet();
+        var visited = new HashSet<string>(StringComparer.Ordinal);
+        var closedClasses = new HashSet<string>(StringComparer.Ordinal);
+        var queue = new Queue<INamedTypeSymbol>();
+
+        void HeldBy(ITypeSymbol? holder)
         {
-            foreach (var holder in typeSet.GetAll())
+            if (holder == null) return;
+            foreach (var prop in holder.GetMembers().OfType<IPropertySymbol>())
             {
-                foreach (var prop in holder.GetMembers().OfType<IPropertySymbol>())
+                if (prop.IsStatic) continue;
+                foreach (var n in Constructed(prop.Type))
                 {
-                    if (prop.IsStatic) continue;
-                    foreach (var n in Constructed(prop.Type))
-                    {
-                        if (!IsClosed(n)) continue;
-                        if (!mapping.TryGetTypeSet(n.OriginalDefinition, out var generic)
-                            && !mapping.TryGetTypeSet(n, out generic)) continue;
-                        if (_blacklist.ShouldSkip(generic)) continue;
-                        if (generic.Direct is not INamedTypeSymbol { IsAbstract: false, TypeArguments.Length: > 0 }) continue;
-                        if (generic.Getter == null) continue;
-                        if (_objectTypeTester.IsModObject(generic.Getter)) continue;
-                        if (_objectTypeTester.IsGroup(generic.Setter) || _objectTypeTester.IsGroup(generic.Direct)) continue;
-                        var args = n.TypeArguments;
-                        var direct = Close(generic.Direct, args);
-                        if (direct == null) continue;
-                        var full = Full(direct);
-                        if (!seen.Add(full)) continue;
-                        var getter = Close(generic.Getter, args);
-                        var setter = Close(generic.Setter, args);
-                        yield return new Entry(
-                            generic,
-                            full,
-                            getter == null ? null : Full(getter),
-                            setter == null ? null : Full(setter),
-                            Full(getter ?? setter ?? direct),
-                            ", " + string.Join(", ", args.Select(Full)));
-                    }
+                    if (IsClosed(n)) queue.Enqueue(n);
                 }
             }
+        }
+
+        foreach (var typeSet in related)
+        {
+            foreach (var holder in typeSet.GetAll()) HeldBy(holder);
+        }
+
+        while (queue.Count > 0)
+        {
+            var n = queue.Dequeue();
+            if (!visited.Add(Full(n))) continue;
+            if (!mapping.TryGetTypeSet(n, out var generic)) continue;
+            if (!relatedSet.Contains(generic)) continue;
+            if (_blacklist.ShouldSkip(generic)) continue;
+            if (generic.Direct is not INamedTypeSymbol { TypeArguments.Length: > 0 }) continue;
+            if (generic.Getter == null) continue;
+            if (_objectTypeTester.IsModObject(generic.Getter)) continue;
+            if (_objectTypeTester.IsGroup(generic.Setter) || _objectTypeTester.IsGroup(generic.Direct)) continue;
+            var args = n.TypeArguments;
+            if (Close(generic.Direct, args) is not INamedTypeSymbol direct) continue;
+            var full = Full(direct);
+            // the class, its getter and its setter lead to the same entry
+            if (!closedClasses.Add(full)) continue;
+            var getter = Close(generic.Getter, args);
+            var setter = Close(generic.Setter, args);
+
+            HeldBy(direct);
+            HeldBy(getter);
+            HeldBy(setter);
+            foreach (var derived in mapping.TryGetDeepInheritingClasses(generic))
+            {
+                if (derived.Direct is INamedTypeSymbol d && CloseDerived(d, direct) is { } closed) queue.Enqueue(closed);
+            }
+
+            if (direct.IsAbstract) continue;
+            yield return new Entry(
+                generic,
+                full,
+                getter == null ? null : Full(getter),
+                setter == null ? null : Full(setter),
+                Full(getter ?? setter ?? direct),
+                ", " + string.Join(", ", args.Select(Full)));
+        }
+    }
+
+    /// <summary>
+    /// A generic class that derives from a closed generic class, closed with the arguments that make its base that
+    /// class: ObjectModIntProperty&lt;T&gt; : AObjectModProperty&lt;T&gt; and AObjectModProperty&lt;Weapon.Property&gt;
+    /// give ObjectModIntProperty&lt;Weapon.Property&gt;. Null if no arguments do, or if it is not generic.
+    /// </summary>
+    private static INamedTypeSymbol? CloseDerived(INamedTypeSymbol derived, INamedTypeSymbol closedBase)
+    {
+        var definition = derived.OriginalDefinition;
+        if (definition.TypeParameters.Length == 0) return null;
+        for (var b = definition.BaseType; b != null; b = b.BaseType)
+        {
+            if (!SymbolEqualityComparer.Default.Equals(b.OriginalDefinition, closedBase.OriginalDefinition)) continue;
+            var found = new Dictionary<ITypeParameterSymbol, ITypeSymbol>(SymbolEqualityComparer.Default);
+            if (!Unify(b, closedBase, found)) return null;
+            var args = new ITypeSymbol[definition.TypeParameters.Length];
+            for (int i = 0; i < args.Length; i++)
+            {
+                if (!found.TryGetValue(definition.TypeParameters[i], out var arg)) return null;
+                args[i] = arg;
+            }
+            return definition.Construct(args);
+        }
+        return null;
+    }
+
+    /// <summary>Matches a type written with type parameters to a closed type, filling in the parameters</summary>
+    private static bool Unify(ITypeSymbol pattern, ITypeSymbol actual, Dictionary<ITypeParameterSymbol, ITypeSymbol> found)
+    {
+        switch (pattern)
+        {
+            case ITypeParameterSymbol p:
+                if (found.TryGetValue(p, out var had)) return SymbolEqualityComparer.Default.Equals(had, actual);
+                found[p] = actual;
+                return true;
+            case INamedTypeSymbol pn when actual is INamedTypeSymbol an:
+                if (!SymbolEqualityComparer.Default.Equals(pn.OriginalDefinition, an.OriginalDefinition)) return false;
+                if (pn.TypeArguments.Length != an.TypeArguments.Length) return false;
+                for (int i = 0; i < pn.TypeArguments.Length; i++)
+                {
+                    if (!Unify(pn.TypeArguments[i], an.TypeArguments[i], found)) return false;
+                }
+                return true;
+            case IArrayTypeSymbol pa when actual is IArrayTypeSymbol aa:
+                return Unify(pa.ElementType, aa.ElementType, found);
+            default:
+                return SymbolEqualityComparer.Default.Equals(pattern, actual);
         }
     }
 

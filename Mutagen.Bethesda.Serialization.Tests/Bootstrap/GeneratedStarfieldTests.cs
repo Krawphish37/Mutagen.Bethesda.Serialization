@@ -203,4 +203,81 @@ public class GeneratedStarfieldTests : IClassFixture<GeneratedStarfield>
         census.ShouldBeGreaterThan(40);
         failures.ShouldBeEmpty();
     }
+
+    // C76 (SFSearch S170): the registry lists every closed generic class a Starfield record can hold, each with its
+    // FieldDefaults: found here by reflection over the Starfield assembly (property types of every Loqui class,
+    // then of each closed class found, and the generic classes deriving from each), independently of the generator
+    [Fact]
+    public void RegistryCoversEveryReachableClosedGeneric()
+    {
+        var assembly = typeof(Mutagen.Bethesda.Starfield.StarfieldMod).Assembly;
+        bool IsLoquiClass(Type t) => t.IsClass && t.Assembly == assembly && typeof(Loqui.ILoquiObject).IsAssignableFrom(t)
+            && !t.GetInterfaces().Any(i => i.Name.StartsWith("IGroupGetter") || i.Name.StartsWith("IListGroupGetter"));
+        var genericClasses = assembly.GetTypes().Where(t => t.IsGenericTypeDefinition && IsLoquiClass(t)).ToArray();
+        var queue = new Queue<Type>();
+        void HeldBy(Type holder)
+        {
+            foreach (var prop in holder.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+            {
+                foreach (var t in Constructed(prop.PropertyType)) queue.Enqueue(t);
+            }
+        }
+        foreach (var t in assembly.GetTypes().Where(t => !t.IsGenericType && IsLoquiClass(t))) HeldBy(t);
+        var seen = new HashSet<Type>();
+        var expected = new List<Type>();
+        while (queue.Count > 0)
+        {
+            var t = queue.Dequeue();
+            if (!IsLoquiClass(t) || t.ContainsGenericParameters || !seen.Add(t)) continue;
+            HeldBy(t);
+            foreach (var g in genericClasses)
+            {
+                for (var b = g.BaseType; b != null; b = b.BaseType)
+                {
+                    if (!b.IsGenericType || b.GetGenericTypeDefinition() != t.GetGenericTypeDefinition()) continue;
+                    // the derived class's parameters as its base's arguments, in order (all Mutagen's derived generics are so)
+                    if (b.GetGenericArguments().SequenceEqual(g.GetGenericArguments())) queue.Enqueue(g.MakeGenericType(t.GetGenericArguments()));
+                    break;
+                }
+            }
+            if (!t.IsAbstract) expected.Add(t);
+        }
+        var registry = _gen.Get("StarfieldSerializationRegistry.g.cs");
+        var listed = registry.Split('\n').Count(l => l.Contains("FieldDefaults<"));
+        foreach (var t in expected.OrderBy(Name, StringComparer.Ordinal))
+        {
+            _output.WriteLine(Name(t));
+            var plain = t.GetGenericTypeDefinition().FullName!.Split('`')[0];
+            registry.ShouldContain($"[typeof({Name(t)})] = static () => global::{plain}_Serialization.FieldDefaults<{string.Join(", ", t.GetGenericArguments().Select(Name))}>(),");
+        }
+        _output.WriteLine($"{expected.Count} closed generic classes, {listed} listed with FieldDefaults");
+        expected.Count(t => t.Name.StartsWith("ObjectMod")).ShouldBeGreaterThan(20);
+        expected.ShouldContain(typeof(Mutagen.Bethesda.Starfield.ObjectModIntProperty<Mutagen.Bethesda.Starfield.Weapon.Property>));
+        expected.ShouldContain(typeof(Mutagen.Bethesda.Starfield.ObjectModFormLinkIntProperty<Mutagen.Bethesda.Starfield.Npc.Property>));
+        expected.ShouldContain(typeof(Mutagen.Bethesda.Starfield.ObjectModEnumProperty<Mutagen.Bethesda.Starfield.AObjectModification.NoneProperty>));
+        listed.ShouldBe(expected.Count);
+    }
+
+    private static IEnumerable<Type> Constructed(Type t)
+    {
+        if (t.IsArray)
+        {
+            foreach (var x in Constructed(t.GetElementType()!)) yield return x;
+            yield break;
+        }
+        if (!t.IsGenericType) yield break;
+        yield return t;
+        foreach (var arg in t.GetGenericArguments())
+        {
+            foreach (var x in Constructed(arg)) yield return x;
+        }
+    }
+
+    /// <summary>A type as the generator writes it: global::A.B&lt;global::C.D&gt;, nested types with a dot</summary>
+    private static string Name(Type t)
+    {
+        if (!t.IsGenericType) return "global::" + t.FullName!.Replace('+', '.');
+        var plain = t.GetGenericTypeDefinition().FullName!.Split('`')[0].Replace('+', '.');
+        return $"global::{plain}<{string.Join(", ", t.GetGenericArguments().Select(Name))}>";
+    }
 }
