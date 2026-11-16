@@ -151,6 +151,21 @@ public abstract class AFlagsEnumTest<TWriterKernel, TWriter, TReaderKernel, TRea
         Read<C72NoTop>(OldText(old)).ShouldBe(value);
     }
 
+    // Starfield.esm's furniture markers (S162): 3,904 EntryTypes/ExitTypes values hold all 32 bits of an int flag enum
+    // whose members end at 0x10. No "0x0" item; the old text, with it, reads back
+    [Fact]
+    public void FurnitureMarkerAllBits()
+    {
+        var value = (Mutagen.Bethesda.Starfield.Furniture.EntryParameterType)(-1);
+        var texts = new[] { "Front", "Behind", "Right", "Left", "Other" }
+            .Concat(Enumerable.Range(5, 27).Select(i => "0x" + (1UL << i).ToString("X")))
+            .ToArray();
+        RoundTrip(value, texts);
+        var old = value.EnumerateContainedFlags(includeUndefined: true).Select(f => f.ToStringFast()).ToArray();
+        old.ShouldBe(texts.Append("0x0"));
+        Read<Mutagen.Bethesda.Starfield.Furniture.EntryParameterType>(OldText(old)).ShouldBe(value);
+    }
+
     protected abstract string OldText(string[] items);
 
     // Every [Flags] enum of Mutagen's game and core assemblies that Noggog can handle (no member with the sign bit):
