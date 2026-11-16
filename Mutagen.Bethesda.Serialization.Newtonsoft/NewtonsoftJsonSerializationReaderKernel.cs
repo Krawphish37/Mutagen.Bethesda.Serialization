@@ -175,9 +175,10 @@ public class NewtonsoftJsonSerializationReaderKernel : ISerializationReaderKerne
 
     public TEnum? ReadEnum<TEnum>(JsonReadingUnit reader) where TEnum : struct, Enum, IConvertible
     {
-        if (Enums<TEnum>.IsFlagsEnum)
+        if (FlagsEnumText.IsFlags<TEnum>())
         {
-            TEnum ret = default;
+            // The kernel's own bit handling (C72), not Noggog's flag helpers
+            ulong bits = 0;
 
             SkipPropertyName(reader);
             if (reader.Reader.TokenType == JsonToken.StartArray)
@@ -189,22 +190,13 @@ public class NewtonsoftJsonSerializationReaderKernel : ISerializationReaderKerne
                         break;
                     }
                     var str = (string)reader.Reader.Value!;
-                    var strSpan = str.AsSpan();
-                    if (Enum.TryParse<TEnum>(strSpan, out var otherEnum))
+                    if (!FlagsEnumText.TryAdd<TEnum>(str.AsSpan(), ref bits))
                     {
-                        ret = Enums<TEnum>.Or(ret, otherEnum);
-                        continue;
+                        throw new ArgumentException($"Could not convert to {typeof(TEnum)}: {str}");
                     }
-
-                    if (Enums<TEnum>.TryParseFromNumber(strSpan, out otherEnum))
-                    {
-                        ret = Enums<TEnum>.Or(ret, otherEnum);
-                        continue;
-                    }
-                    throw new ArgumentException($"Could not convert to {typeof(TEnum)}: {str}");
                 }
 
-                return ret;
+                return FlagsEnumText.FromBits<TEnum>(bits);
             }
             if (reader.Reader.Value is null or "") return null;
             throw new ArgumentException($"Could not convert to {typeof(TEnum)}: {reader.Reader.Value}");

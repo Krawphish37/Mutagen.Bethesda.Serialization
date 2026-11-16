@@ -577,16 +577,18 @@ public class NewtonsoftJsonSerializationWriterKernel : ISerializationWriterKerne
         {
             writer.Writer.WriteValue("");
         }
-        else if (!Enums<TEnum>.IsFlagsEnum)
+        else if (!FlagsEnumText.IsFlags<TEnum>())
         {
             writer.Writer.WriteValue(item.Value.ToStringFast());
         }
         else
         {
+            // The kernel's own walk over the value's bits (C72): Noggog's flag helpers never finish for an int-based
+            // enum with a member at bit 31
             writer.Writer.WriteStartArray();
-            foreach (var flag in item.Value.EnumerateContainedFlags(includeUndefined: true))
+            foreach (var flag in FlagsEnumText.ToTexts(item.Value))
             {
-                writer.Writer.WriteValue(flag.ToStringFast());
+                writer.Writer.WriteValue(flag);
             }
             writer.Writer.WriteEndArray();
         }

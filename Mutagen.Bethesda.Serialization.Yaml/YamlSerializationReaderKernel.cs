@@ -174,30 +174,22 @@ public class YamlSerializationReaderKernel : ISerializationReaderKernel<YamlRead
     public TEnum? ReadEnum<TEnum>(YamlReadingUnit reader)
         where TEnum : struct, Enum, IConvertible
     {
-        if (Enums<TEnum>.IsFlagsEnum)
+        if (FlagsEnumText.IsFlags<TEnum>())
         {
+            // The kernel's own bit handling (C72), not Noggog's flag helpers
             if (reader.Parser.TryConsume<SequenceStart>(out _))
             {
-                TEnum ret = default;
+                ulong bits = 0;
                 while (reader.Parser.TryConsume<Scalar>(out var e))
                 {
-                    var strSpan = e.Value.AsSpan();
-                    if (Enum.TryParse<TEnum>(strSpan, out var otherEnum))
+                    if (!FlagsEnumText.TryAdd<TEnum>(e.Value.AsSpan(), ref bits))
                     {
-                        ret = Enums<TEnum>.Or(ret, otherEnum);
-                        continue;
+                        throw new ArgumentException($"Could not convert to {typeof(TEnum)}: {e.Value}");
                     }
-            
-                    if (Enums<TEnum>.TryParseFromNumber(strSpan, out otherEnum))
-                    {
-                        ret = Enums<TEnum>.Or(ret, otherEnum);
-                        continue;
-                    }
-                    throw new ArgumentException($"Could not convert to {typeof(TEnum)}: {e.Value}");
                 }
 
                 reader.Parser.Consume<SequenceEnd>();
-                return ret;
+                return FlagsEnumText.FromBits<TEnum>(bits);
             }
             var str = ReadString(reader);
             if (str.IsNullOrWhitespace()) return null;
