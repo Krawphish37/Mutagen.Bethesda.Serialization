@@ -124,7 +124,7 @@ public abstract class AFlagsEnumTest<TWriterKernel, TWriter, TReaderKernel, TRea
         RoundTrip(default(C72Int));
     }
 
-    // fixes.20's real enums with a bit-31 member
+    // The real enums that name bit 31: int-based in Mutagen fixes.20 (Noggog never finished), uint from fixes.21 (C71)
     [Fact]
     public void Fixes20NavmeshAndBiomeMarkerFlags()
     {
