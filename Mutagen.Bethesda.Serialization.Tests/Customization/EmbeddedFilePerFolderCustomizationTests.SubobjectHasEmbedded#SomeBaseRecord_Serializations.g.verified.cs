@@ -48,7 +48,7 @@ internal static class SomeBaseRecord_Serialization
     {
         metaData.Cancel.ThrowIfCancellationRequested();
         if (item.SomeRecord is {} SomeRecordChecked
-            && Mutagen.Bethesda.Serialization.SourceGenerator.Tests.SomeRecord_Serialization.HasSerializationItems(SomeRecordChecked, metaData))
+            && (kernel.WriteDefaults || Mutagen.Bethesda.Serialization.SourceGenerator.Tests.SomeRecord_Serialization.HasSerializationItems(SomeRecordChecked, metaData)))
         {
             await kernel.WriteLoqui(writer, "SomeRecord", SomeRecordChecked, metaData, static (w, i, k, m) => Mutagen.Bethesda.Serialization.SourceGenerator.Tests.SomeRecord_Serialization.Serialize<TKernel, TWriteObject>(w, i, k, m));
         }

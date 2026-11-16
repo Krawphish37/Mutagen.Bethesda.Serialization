@@ -48,7 +48,7 @@ internal static class SomeObject_Serialization
     {
         metaData.Cancel.ThrowIfCancellationRequested();
         if (item.SomeBytes is {} checkedSomeBytes
-            && checkedSomeBytes.Count > 0)
+            && (kernel.WriteDefaults || checkedSomeBytes.Count > 0))
         {
             kernel.StartListSection(writer, "SomeBytes");
             foreach (var listItem in checkedSomeBytes)

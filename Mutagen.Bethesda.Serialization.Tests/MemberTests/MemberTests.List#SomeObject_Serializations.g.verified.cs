@@ -48,7 +48,7 @@ internal static class SomeObject_Serialization
     {
         metaData.Cancel.ThrowIfCancellationRequested();
         if (item.SomeList is {} checkedSomeList
-            && checkedSomeList.Count > 0)
+            && (kernel.WriteDefaults || checkedSomeList.Count > 0))
         {
             kernel.StartListSection(writer, "SomeList");
             foreach (var listItem in checkedSomeList)
@@ -58,7 +58,7 @@ internal static class SomeObject_Serialization
             kernel.EndListSection(writer);
         }
         if (item.SomeList2 is {} checkedSomeList2
-            && checkedSomeList2.Count > 0)
+            && (kernel.WriteDefaults || checkedSomeList2.Count > 0))
         {
             kernel.StartListSection(writer, "SomeList2");
             foreach (var listItem in checkedSomeList2)
@@ -68,7 +68,7 @@ internal static class SomeObject_Serialization
             kernel.EndListSection(writer);
         }
         if (item.SomeList3 is {} checkedSomeList3
-            && checkedSomeList3.Count > 0)
+            && (kernel.WriteDefaults || checkedSomeList3.Count > 0))
         {
             kernel.StartListSection(writer, "SomeList3");
             foreach (var listItem in checkedSomeList3)

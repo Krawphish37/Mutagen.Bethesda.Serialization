@@ -57,7 +57,7 @@ internal static class TestMod_Serialization
         try
         {
             if (item.SortableRecords is {} checkedSortableRecords
-                && checkedSortableRecords.Count > 0)
+                && (kernel.WriteDefaults || checkedSortableRecords.Count > 0))
             {
                 kernel.StartListSection(writer, "SortableRecords");
                 var sortedItems = checkedSortableRecords

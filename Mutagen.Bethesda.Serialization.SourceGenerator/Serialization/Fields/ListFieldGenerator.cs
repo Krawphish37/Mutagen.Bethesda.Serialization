@@ -96,7 +96,8 @@ public class ListFieldGenerator : AListFieldGenerator
             i.Add($"{fieldAccessor} is {{}} checked{fieldName}");
             if (!nullable)
             {
-                i.Add($"checked{fieldName}{GetCountAccessor(field)} > 0");
+                // An empty list is left out, unless the kernel writes defaults (C59, W18)
+                i.Add($"({kernelAccessor}.WriteDefaults || checked{fieldName}{GetCountAccessor(field)} > 0)");
             }
         }
         fieldAccessor = $"checked{fieldName}";

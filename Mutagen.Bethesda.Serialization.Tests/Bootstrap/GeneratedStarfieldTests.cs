@@ -121,4 +121,17 @@ public class GeneratedStarfieldTests : IClassFixture<GeneratedStarfield>
             _gen.Sources.ContainsKey(cls.Substring(cls.LastIndexOf('.') + 1) + "_Serializations.g.cs").ShouldBeTrue(cls);
         }
     }
+
+    // C59 W18: a sub-object whose fields are all default and an empty list are left out unless the kernel writes defaults
+    [Fact]
+    public void GuardsAskTheKernelAboutDefaults()
+    {
+        var all = string.Join("\n", _gen.Sources.Values);
+        all.ShouldContain("(kernel.WriteDefaults || ");
+        all.ShouldContain(".Count > 0)");
+        foreach (var line in all.Split('\n').Where(l => l.Contains(".Count > 0)") && l.TrimStart().StartsWith("&& checked")))
+        {
+            line.ShouldContain("kernel.WriteDefaults || ");
+        }
+    }
 }

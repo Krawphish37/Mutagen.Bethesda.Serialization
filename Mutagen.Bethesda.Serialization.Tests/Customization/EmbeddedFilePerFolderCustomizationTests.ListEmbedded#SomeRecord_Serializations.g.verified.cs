@@ -49,7 +49,7 @@ internal static class SomeRecord_Serialization
         metaData.Cancel.ThrowIfCancellationRequested();
         kernel.WriteInt32(writer, "SomeMember1", item.SomeMember1, default(int));
         if (item.SomeList is {} checkedSomeList
-            && checkedSomeList.Count > 0)
+            && (kernel.WriteDefaults || checkedSomeList.Count > 0))
         {
             kernel.StartListSection(writer, "SomeList");
             foreach (var listItem in checkedSomeList)

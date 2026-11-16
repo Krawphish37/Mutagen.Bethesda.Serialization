@@ -49,7 +49,7 @@ internal static class ContainerObject_Serialization
     {
         metaData.Cancel.ThrowIfCancellationRequested();
         if (item.Items is {} checkedItems
-            && checkedItems.Count > 0)
+            && (kernel.WriteDefaults || checkedItems.Count > 0))
         {
             kernel.StartListSection(writer, "Items");
             var sortedItems = checkedItems

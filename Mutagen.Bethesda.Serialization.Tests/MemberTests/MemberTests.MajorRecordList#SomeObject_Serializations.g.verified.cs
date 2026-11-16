@@ -73,7 +73,7 @@ internal static class SomeObject_Serialization
             itemWriter: static (w, i, k, m) => Mutagen.Bethesda.Serialization.SourceGenerator.Tests.TestMajorRecord_Serialization.Serialize<TKernel, TWriteObject>(w, i, k, m),
             withNumbering: false));
         if (item.SomeList4 is {} checkedSomeList4
-            && checkedSomeList4.Count > 0)
+            && (kernel.WriteDefaults || checkedSomeList4.Count > 0))
         {
             kernel.StartListSection(writer, "SomeList4");
             foreach (var listItem in checkedSomeList4)

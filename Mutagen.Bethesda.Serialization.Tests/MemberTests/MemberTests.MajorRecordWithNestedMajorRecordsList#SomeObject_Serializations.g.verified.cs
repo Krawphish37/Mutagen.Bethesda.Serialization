@@ -76,7 +76,7 @@ internal static class SomeObject_Serialization
             withNumbering: false,
             eachRecordInFolder: true));
         if (item.SomeList4 is {} checkedSomeList4
-            && checkedSomeList4.Count > 0)
+            && (kernel.WriteDefaults || checkedSomeList4.Count > 0))
         {
             kernel.StartListSection(writer, "SomeList4");
             foreach (var listItem in checkedSomeList4)

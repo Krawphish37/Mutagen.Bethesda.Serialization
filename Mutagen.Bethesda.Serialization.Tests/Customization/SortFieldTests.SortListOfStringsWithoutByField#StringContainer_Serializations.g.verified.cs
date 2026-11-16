@@ -49,7 +49,7 @@ internal static class StringContainer_Serialization
     {
         metaData.Cancel.ThrowIfCancellationRequested();
         if (item.Names is {} checkedNames
-            && checkedNames.Count > 0)
+            && (kernel.WriteDefaults || checkedNames.Count > 0))
         {
             kernel.StartListSection(writer, "Names");
             var sortedItems = checkedNames

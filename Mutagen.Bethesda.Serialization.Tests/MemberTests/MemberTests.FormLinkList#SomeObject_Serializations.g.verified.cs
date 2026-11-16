@@ -48,7 +48,7 @@ internal static class SomeObject_Serialization
     {
         metaData.Cancel.ThrowIfCancellationRequested();
         if (item.SomeFormKeys is {} checkedSomeFormKeys
-            && checkedSomeFormKeys.Count > 0)
+            && (kernel.WriteDefaults || checkedSomeFormKeys.Count > 0))
         {
             kernel.StartListSection(writer, "SomeFormKeys");
             foreach (var listItem in checkedSomeFormKeys)
@@ -58,7 +58,7 @@ internal static class SomeObject_Serialization
             kernel.EndListSection(writer);
         }
         if (item.SomeFormKeys2 is {} checkedSomeFormKeys2
-            && checkedSomeFormKeys2.Count > 0)
+            && (kernel.WriteDefaults || checkedSomeFormKeys2.Count > 0))
         {
             kernel.StartListSection(writer, "SomeFormKeys2");
             foreach (var listItem in checkedSomeFormKeys2)

@@ -49,7 +49,7 @@ internal static class IntContainer_Serialization
     {
         metaData.Cancel.ThrowIfCancellationRequested();
         if (item.Numbers is {} checkedNumbers
-            && checkedNumbers.Count > 0)
+            && (kernel.WriteDefaults || checkedNumbers.Count > 0))
         {
             kernel.StartListSection(writer, "Numbers");
             var sortedItems = checkedNumbers

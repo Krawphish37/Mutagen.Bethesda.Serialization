@@ -49,7 +49,7 @@ internal static class SomeRecord_Serialization
         metaData.Cancel.ThrowIfCancellationRequested();
         kernel.WriteInt32(writer, "SomeMember1", item.SomeMember1, default(int));
         if (item.MajorRecord is {} MajorRecordChecked
-            && Mutagen.Bethesda.Serialization.SourceGenerator.Tests.TestMajorRecord_Serialization.HasSerializationItems(MajorRecordChecked, metaData))
+            && (kernel.WriteDefaults || Mutagen.Bethesda.Serialization.SourceGenerator.Tests.TestMajorRecord_Serialization.HasSerializationItems(MajorRecordChecked, metaData)))
         {
             await kernel.WriteLoqui(writer, "MajorRecord", MajorRecordChecked, metaData, static (w, i, k, m) => Mutagen.Bethesda.Serialization.SourceGenerator.Tests.TestMajorRecord_Serialization.Serialize<TKernel, TWriteObject>(w, i, k, m));
         }

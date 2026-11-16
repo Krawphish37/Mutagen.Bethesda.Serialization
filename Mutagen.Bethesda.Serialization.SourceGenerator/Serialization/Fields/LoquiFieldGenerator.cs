@@ -121,7 +121,8 @@ public class LoquiFieldGenerator : ISerializationForFieldGenerator
                 fieldAccessor = $"{fieldName}Checked";
                 if (!field.IsNullable())
                 {
-                    i.Add($"{fieldSerializationItems.HasSerializationCall(hasInheriting)}({fieldAccessor}, {metaAccessor})");
+                    // A sub-object whose fields are all default is left out, unless the kernel writes defaults (C59, W18)
+                    i.Add($"({kernelAccessor}.WriteDefaults || {fieldSerializationItems.HasSerializationCall(hasInheriting)}({fieldAccessor}, {metaAccessor}))");
                 }
             }
         }
