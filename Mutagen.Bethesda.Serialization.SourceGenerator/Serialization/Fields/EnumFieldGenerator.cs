@@ -4,7 +4,7 @@ using Noggog.StructuredStrings.CSharp;
 
 namespace Mutagen.Bethesda.Serialization.SourceGenerator.Serialization.Fields;
 
-public class EnumFieldGenerator : ISerializationForFieldGenerator
+public class EnumFieldGenerator : ISerializationForFieldGenerator, IDefaultComparingFieldGenerator
 {
     public IEnumerable<string> AssociatedTypes => Array.Empty<string>();
 
@@ -85,6 +85,9 @@ public class EnumFieldGenerator : ISerializationForFieldGenerator
     }
 
     public bool HasVariableHasSerialize => true;
+
+    public string ComparedDefault(ITypeSymbol field, string? defaultValueAccessor) =>
+        defaultValueAccessor ?? $"default({field.PeelNullable()}{(field.IsNullable() ? "?" : null)})";
 
     public string? GetDefault(ITypeSymbol field)
     {

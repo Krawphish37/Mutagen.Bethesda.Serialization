@@ -134,4 +134,16 @@ public class GeneratedStarfieldTests : IClassFixture<GeneratedStarfield>
             line.ShouldContain("kernel.WriteDefaults || ");
         }
     }
+
+    // C59 S124: each class lists the value each field is left out at, with Mutagen's own defaults, merged with its base's
+    [Fact]
+    public void FieldDefaultsAreTheComparedDefaults()
+    {
+        var book = _gen.Get("BookTeachesNothing_Serializations.g.cs");
+        book.ShouldContain("ret[\"RawContent\"] = Mutagen.Bethesda.Starfield.BookTeachesNothing.RawContentDefault;");
+        book.ShouldContain("kernel.WriteUInt32(writer, \"RawContent\", item.RawContent, Mutagen.Bethesda.Starfield.BookTeachesNothing.RawContentDefault);");
+        _gen.Get("Weapon_Serializations.g.cs").ShouldContain("var ret = Mutagen.Bethesda.Starfield.StarfieldMajorRecord_Serialization.BuildFieldDefaults();");
+        _gen.Get("StarfieldMajorRecord_Serializations.g.cs").ShouldNotContain("ret[\"FormVersion\"]");
+        _gen.Get("StarfieldSerializationRegistry.g.cs").ShouldContain("[typeof(global::Mutagen.Bethesda.Starfield.BookTeachesNothing)] = static () => global::Mutagen.Bethesda.Starfield.BookTeachesNothing_Serialization.FieldDefaults,");
+    }
 }

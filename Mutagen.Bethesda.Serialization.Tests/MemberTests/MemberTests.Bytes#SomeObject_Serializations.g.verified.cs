@@ -58,6 +58,28 @@ internal static class SomeObject_Serialization
         kernel.WriteBytes(writer, "SomeBytes9", item.SomeBytes9, default(byte[]));
     }
 
+    /// <summary>
+    /// The value each field is left out at when it holds it (unless the writer kernel writes defaults), by field name:
+    /// the fields compared with a default, of this class and its base classes
+    /// </summary>
+    public static IReadOnlyDictionary<string, object?> FieldDefaults => _fieldDefaults ??= BuildFieldDefaults();
+    private static IReadOnlyDictionary<string, object?>? _fieldDefaults;
+
+    internal static Dictionary<string, object?> BuildFieldDefaults()
+    {
+        var ret = new Dictionary<string, object?>();
+        ret["SomeBytes"] = default(byte[]);
+        ret["SomeBytes2"] = default(byte[]);
+        ret["SomeBytes3"] = default(byte[]);
+        ret["SomeBytes4"] = default(byte[]?);
+        ret["SomeBytes5"] = default(byte[]?);
+        ret["SomeBytes6"] = default(byte[]?);
+        ret["SomeBytes7"] = default(byte[]?);
+        ret["SomeBytes8"] = default(byte[]);
+        ret["SomeBytes9"] = default(byte[]);
+        return ret;
+    }
+
     public static bool HasSerializationItems(
         Mutagen.Bethesda.Serialization.SourceGenerator.Tests.ISomeObjectGetter? item,
         SerializationMetaData metaData)

@@ -50,6 +50,20 @@ internal static class WorldspaceSubBlock_Serialization
         kernel.WriteInt32(writer, "SomeMember1", item.SomeMember1, default(int));
     }
 
+    /// <summary>
+    /// The value each field is left out at when it holds it (unless the writer kernel writes defaults), by field name:
+    /// the fields compared with a default, of this class and its base classes
+    /// </summary>
+    public static IReadOnlyDictionary<string, object?> FieldDefaults => _fieldDefaults ??= BuildFieldDefaults();
+    private static IReadOnlyDictionary<string, object?>? _fieldDefaults;
+
+    internal static Dictionary<string, object?> BuildFieldDefaults()
+    {
+        var ret = new Dictionary<string, object?>();
+        ret["SomeMember1"] = default(int);
+        return ret;
+    }
+
     public static bool HasSerializationItems(
         Mutagen.Bethesda.Serialization.SourceGenerator.Tests.IWorldspaceSubBlockGetter? item,
         SerializationMetaData metaData)

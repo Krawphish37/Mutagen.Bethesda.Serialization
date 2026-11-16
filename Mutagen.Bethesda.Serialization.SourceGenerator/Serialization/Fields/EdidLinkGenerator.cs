@@ -4,7 +4,7 @@ using Noggog.StructuredStrings.CSharp;
 
 namespace Mutagen.Bethesda.Serialization.SourceGenerator.Serialization.Fields;
 
-public class EdidLinkGenerator : ISerializationForFieldGenerator
+public class EdidLinkGenerator : ISerializationForFieldGenerator, IDefaultComparingFieldGenerator
 {
     public IEnumerable<string> AssociatedTypes => Array.Empty<string>();
 
@@ -77,6 +77,11 @@ public class EdidLinkGenerator : ISerializationForFieldGenerator
             }
         }
     }
+
+    public string ComparedDefault(ITypeSymbol field, string? defaultValueAccessor) =>
+        defaultValueAccessor != null
+            ? $"{defaultValueAccessor}.EDID.Type"
+            : "RecordType.Null.Type";
 
     public string? GetDefault(ITypeSymbol field)
     {

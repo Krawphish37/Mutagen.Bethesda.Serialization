@@ -4,7 +4,7 @@ using Noggog.StructuredStrings.CSharp;
 
 namespace Mutagen.Bethesda.Serialization.SourceGenerator.Serialization.Fields;
 
-public class FormLinkFieldGenerator : ISerializationForFieldGenerator
+public class FormLinkFieldGenerator : ISerializationForFieldGenerator, IDefaultComparingFieldGenerator
 {
     public IEnumerable<string> AssociatedTypes => Array.Empty<string>();
 
@@ -80,6 +80,11 @@ public class FormLinkFieldGenerator : ISerializationForFieldGenerator
             }
         }
     }
+
+    public string ComparedDefault(ITypeSymbol field, string? defaultValueAccessor) =>
+        defaultValueAccessor != null
+            ? $"{defaultValueAccessor}.FormKeyNullable"
+            : $"default(FormKey{Utility.NullChar(IsNullable(field))})";
 
     public string? GetDefault(ITypeSymbol field)
     {

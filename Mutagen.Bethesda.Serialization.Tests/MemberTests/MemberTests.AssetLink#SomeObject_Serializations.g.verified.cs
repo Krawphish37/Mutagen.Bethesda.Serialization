@@ -71,6 +71,40 @@ internal static class SomeObject_Serialization
         kernel.WriteString(writer, "SomeAssetLink21", item.SomeAssetLink21?.GivenPath, default(string?));
     }
 
+    /// <summary>
+    /// The value each field is left out at when it holds it (unless the writer kernel writes defaults), by field name:
+    /// the fields compared with a default, of this class and its base classes
+    /// </summary>
+    public static IReadOnlyDictionary<string, object?> FieldDefaults => _fieldDefaults ??= BuildFieldDefaults();
+    private static IReadOnlyDictionary<string, object?>? _fieldDefaults;
+
+    internal static Dictionary<string, object?> BuildFieldDefaults()
+    {
+        var ret = new Dictionary<string, object?>();
+        ret["SomeAssetLink"] = default(string);
+        ret["SomeAssetLink2"] = default(string);
+        ret["SomeAssetLink3"] = default(string);
+        ret["SomeAssetLink4"] = default(string);
+        ret["SomeAssetLink5"] = default(string);
+        ret["SomeAssetLink6"] = default(string);
+        ret["SomeAssetLink7"] = default(string);
+        ret["SomeAssetLink8"] = default(string);
+        ret["SomeAssetLink9"] = default(string);
+        ret["SomeAssetLink10"] = default(string);
+        ret["SomeAssetLink11"] = default(string);
+        ret["SomeAssetLink12"] = default(string);
+        ret["SomeAssetLink13"] = default(string?);
+        ret["SomeAssetLink14"] = default(string?);
+        ret["SomeAssetLink15"] = default(string?);
+        ret["SomeAssetLink16"] = default(string?);
+        ret["SomeAssetLink17"] = default(string?);
+        ret["SomeAssetLink18"] = default(string?);
+        ret["SomeAssetLink19"] = default(string?);
+        ret["SomeAssetLink20"] = default(string?);
+        ret["SomeAssetLink21"] = default(string?);
+        return ret;
+    }
+
     public static bool HasSerializationItems(
         Mutagen.Bethesda.Serialization.SourceGenerator.Tests.ISomeObjectGetter? item,
         SerializationMetaData metaData)

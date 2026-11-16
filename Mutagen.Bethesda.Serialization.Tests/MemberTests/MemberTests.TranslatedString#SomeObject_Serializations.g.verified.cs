@@ -62,6 +62,31 @@ internal static class SomeObject_Serialization
         kernel.WriteTranslatedString(writer, "TranslatedString12", item.TranslatedString12, default(Mutagen.Bethesda.Strings.ITranslatedStringGetter?));
     }
 
+    /// <summary>
+    /// The value each field is left out at when it holds it (unless the writer kernel writes defaults), by field name:
+    /// the fields compared with a default, of this class and its base classes
+    /// </summary>
+    public static IReadOnlyDictionary<string, object?> FieldDefaults => _fieldDefaults ??= BuildFieldDefaults();
+    private static IReadOnlyDictionary<string, object?>? _fieldDefaults;
+
+    internal static Dictionary<string, object?> BuildFieldDefaults()
+    {
+        var ret = new Dictionary<string, object?>();
+        ret["TranslatedString"] = default(TranslatedString);
+        ret["TranslatedString2"] = default(ITranslatedString);
+        ret["TranslatedString3"] = default(ITranslatedStringGetter);
+        ret["TranslatedString4"] = default(TranslatedString?);
+        ret["TranslatedString5"] = default(ITranslatedString?);
+        ret["TranslatedString6"] = default(ITranslatedStringGetter?);
+        ret["TranslatedString7"] = default(Mutagen.Bethesda.Strings.TranslatedString);
+        ret["TranslatedString8"] = default(Mutagen.Bethesda.Strings.ITranslatedString);
+        ret["TranslatedString9"] = default(Mutagen.Bethesda.Strings.ITranslatedStringGetter);
+        ret["TranslatedString10"] = default(Mutagen.Bethesda.Strings.TranslatedString?);
+        ret["TranslatedString11"] = default(Mutagen.Bethesda.Strings.ITranslatedString?);
+        ret["TranslatedString12"] = default(Mutagen.Bethesda.Strings.ITranslatedStringGetter?);
+        return ret;
+    }
+
     public static bool HasSerializationItems(
         Mutagen.Bethesda.Serialization.SourceGenerator.Tests.ISomeObjectGetter? item,
         SerializationMetaData metaData)

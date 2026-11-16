@@ -4,7 +4,7 @@ using Noggog.StructuredStrings.CSharp;
 
 namespace Mutagen.Bethesda.Serialization.SourceGenerator.Serialization.Fields;
 
-public class TranslatedStringFieldGenerator : ISerializationForFieldGenerator
+public class TranslatedStringFieldGenerator : ISerializationForFieldGenerator, IDefaultComparingFieldGenerator
 {
     public IEnumerable<string> AssociatedTypes => new string[]
     {
@@ -75,6 +75,9 @@ public class TranslatedStringFieldGenerator : ISerializationForFieldGenerator
     }
 
     public bool HasVariableHasSerialize => true;
+
+    public string ComparedDefault(ITypeSymbol field, string? defaultValueAccessor) =>
+        defaultValueAccessor ?? $"default({field})";
 
     public string? GetDefault(ITypeSymbol field)
     {

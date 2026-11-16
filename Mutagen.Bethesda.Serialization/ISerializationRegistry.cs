@@ -31,6 +31,17 @@ public interface ISerializationRegistry
     bool TryGetClassType(string name, [MaybeNullWhen(false)] out Type classType);
 
     /// <summary>
+    /// The value each field of a class is left out at when it holds it (the writer leaves a field out when its written
+    /// value equals its default, unless the kernel writes defaults: <see cref="MutagenSerializationWriterKernel{TKernel,TWriterObject}.WriteDefaults"/>),
+    /// by field name, for the class (or its getter or setter interface) and its base classes (C59, S124). It holds the
+    /// fields compared with a default: numbers, texts, enums (as the enum value), links (as the FormKey written, null for
+    /// a nullable link), asset paths, byte arrays and the like, with Mutagen's own defaults where a class has them
+    /// (e.g. BookTeachesNothing's RawContent: uint.MaxValue). Not listed: fields always written (FormVersion), lists
+    /// (left out when empty), and sub-objects (left out when all their fields are left out).
+    /// </summary>
+    bool TryGetFieldDefaults(Type type, [MaybeNullWhen(false)] out IReadOnlyDictionary<string, object?> defaults);
+
+    /// <summary>
     /// Writes the object's fields with the serializer generated for its class (<see cref="SerializationRegistry.ClassTypeOf"/>),
     /// into the current object of <paramref name="writer"/>, as the class's own generated Serialize does: no type tag.
     /// </summary>

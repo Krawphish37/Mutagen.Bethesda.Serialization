@@ -4,7 +4,7 @@ using Noggog.StructuredStrings.CSharp;
 
 namespace Mutagen.Bethesda.Serialization.SourceGenerator.Serialization.Fields;
 
-public class ByteArrayFieldGenerator : ISerializationForFieldGenerator
+public class ByteArrayFieldGenerator : ISerializationForFieldGenerator, IDefaultComparingFieldGenerator
 {
     public IEnumerable<string> AssociatedTypes => Array.Empty<string>();
 
@@ -98,6 +98,9 @@ public class ByteArrayFieldGenerator : ISerializationForFieldGenerator
     }
 
     public bool HasVariableHasSerialize => true;
+
+    public string ComparedDefault(ITypeSymbol field, string? defaultValueAccessor) =>
+        defaultValueAccessor ?? DefaultString(field);
 
     public string DefaultString(ITypeSymbol? field) => $"default(byte[]{(field != null && field.IsNullable() ? "?" : null)})";
 

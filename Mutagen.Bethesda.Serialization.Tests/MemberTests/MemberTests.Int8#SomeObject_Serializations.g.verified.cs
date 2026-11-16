@@ -67,6 +67,37 @@ internal static class SomeObject_Serialization
         kernel.WriteInt8(writer, "SomeMember17", item.SomeMember17, Mutagen.Bethesda.Serialization.SourceGenerator.Tests.SomeObject.SomeMember17Default);
     }
 
+    /// <summary>
+    /// The value each field is left out at when it holds it (unless the writer kernel writes defaults), by field name:
+    /// the fields compared with a default, of this class and its base classes
+    /// </summary>
+    public static IReadOnlyDictionary<string, object?> FieldDefaults => _fieldDefaults ??= BuildFieldDefaults();
+    private static IReadOnlyDictionary<string, object?>? _fieldDefaults;
+
+    internal static Dictionary<string, object?> BuildFieldDefaults()
+    {
+        var ret = new Dictionary<string, object?>();
+        ret["SomeMember0"] = default(sbyte);
+        ret["SomeMember1"] = default(SByte);
+        ret["SomeMember2"] = default(Int8);
+        ret["SomeMember3"] = default(sbyte?);
+        ret["SomeMember4"] = default(SByte?);
+        ret["SomeMember5"] = default(Int8?);
+        ret["SomeMember6"] = default(Nullable<sbyte>);
+        ret["SomeMember7"] = default(Nullable<SByte>);
+        ret["SomeMember8"] = default(Nullable<Int8>);
+        ret["SomeMember9"] = Mutagen.Bethesda.Serialization.SourceGenerator.Tests.SomeObject.SomeMember9Default;
+        ret["SomeMember10"] = Mutagen.Bethesda.Serialization.SourceGenerator.Tests.SomeObject.SomeMember10Default;
+        ret["SomeMember11"] = Mutagen.Bethesda.Serialization.SourceGenerator.Tests.SomeObject.SomeMember11Default;
+        ret["SomeMember12"] = Mutagen.Bethesda.Serialization.SourceGenerator.Tests.SomeObject.SomeMember12Default;
+        ret["SomeMember13"] = Mutagen.Bethesda.Serialization.SourceGenerator.Tests.SomeObject.SomeMember13Default;
+        ret["SomeMember14"] = Mutagen.Bethesda.Serialization.SourceGenerator.Tests.SomeObject.SomeMember14Default;
+        ret["SomeMember15"] = Mutagen.Bethesda.Serialization.SourceGenerator.Tests.SomeObject.SomeMember15Default;
+        ret["SomeMember16"] = Mutagen.Bethesda.Serialization.SourceGenerator.Tests.SomeObject.SomeMember16Default;
+        ret["SomeMember17"] = Mutagen.Bethesda.Serialization.SourceGenerator.Tests.SomeObject.SomeMember17Default;
+        return ret;
+    }
+
     public static bool HasSerializationItems(
         Mutagen.Bethesda.Serialization.SourceGenerator.Tests.ISomeObjectGetter? item,
         SerializationMetaData metaData)

@@ -253,6 +253,8 @@ public class SerializationForObjectGenerator
             GenerateSerialize(compilation, typeSet, sb, baseType, properties, gens);
             
             GenerateSerializeFields(compilation, typeSet, sb, baseType, properties, gens);
+
+            GenerateFieldDefaults(compilation, typeSet, sb, baseType, properties, gens);
             
             if (inheriting.Count > 0)
             {
@@ -1005,6 +1007,55 @@ public class SerializationForObjectGenerator
                     sb.AppendLines(sbInternal);
                 }
             }
+        }
+        sb.AppendLine();
+    }
+
+    /// <summary>
+    /// FieldDefaults: the value each field whose written value is compared with a default is left out at (C59, S124),
+    /// this class's and its base classes', by field name. Exactly the defaults the generated Serialize passes to the
+    /// kernel; fields always written (FormVersion) and fields a customization omits are not listed. Not written for a
+    /// class with generic arguments.
+    /// </summary>
+    private void GenerateFieldDefaults(
+        CompilationUnit compilation,
+        LoquiTypeSet obj,
+        StructuredStringBuilder sb,
+        ITypeSymbol? baseType,
+        PropertyCollection properties,
+        SerializationGenerics generics)
+    {
+        if (generics.ExtraWriterGenerics is { Count: > 0 }) return;
+        string? baseCall = null;
+        if (baseType != null
+            && baseType is not INamedTypeSymbol { TypeArguments.Length: > 0 }
+            && _loquiSerializationNaming.TryGetSerializationItems(baseType, out var baseItems))
+        {
+            baseCall = $"{baseItems.Namespace}.{baseItems.SerializationHousingClassName}.BuildFieldDefaults()";
+        }
+
+        sb.AppendLine("/// <summary>");
+        sb.AppendLine("/// The value each field is left out at when it holds it (unless the writer kernel writes defaults), by field name:");
+        sb.AppendLine("/// the fields compared with a default, of this class and its base classes");
+        sb.AppendLine("/// </summary>");
+        sb.AppendLine("public static IReadOnlyDictionary<string, object?> FieldDefaults => _fieldDefaults ??= BuildFieldDefaults();");
+        sb.AppendLine("private static IReadOnlyDictionary<string, object?>? _fieldDefaults;");
+        sb.AppendLine();
+        sb.AppendLine("internal static Dictionary<string, object?> BuildFieldDefaults()");
+        using (sb.CurlyBrace())
+        {
+            sb.AppendLine($"var ret = {baseCall ?? "new Dictionary<string, object?>()"};");
+            foreach (var prop in properties.InOrder)
+            {
+                compilation.Context.CancellationToken.ThrowIfCancellationRequested();
+                if (prop.AlwaysWrite) continue;
+                if (prop.Generator is not IDefaultComparingFieldGenerator comparing) continue;
+                _customizationDriver.WrapOmission(compilation, sb, obj, prop, () =>
+                {
+                    sb.AppendLine($"ret[\"{prop.Property.Name}\"] = {comparing.ComparedDefault(prop.Property.Type, prop.DefaultString)};");
+                });
+            }
+            sb.AppendLine("return ret;");
         }
         sb.AppendLine();
     }

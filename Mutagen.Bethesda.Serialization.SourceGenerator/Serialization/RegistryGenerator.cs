@@ -200,6 +200,32 @@ public class RegistryGenerator
             sb.AppendLine("public bool TryGetClassType(string name, [MaybeNullWhen(false)] out Type classType) => ByName.TryGetValue(name, out classType);");
             sb.AppendLine();
 
+            sb.AppendLine("private static readonly Dictionary<Type, Func<IReadOnlyDictionary<string, object?>>> FieldDefaultsOf = new()");
+            using (Initializer(sb))
+            {
+                foreach (var o in objects)
+                {
+                    if (!_serializationNaming.TryGetSerializationItems(o.TypeSet.GetAny(), out var items)) continue;
+                    sb.AppendLine($"[typeof({o.Direct})] = static () => global::{items.Namespace}.{items.SerializationHousingClassName}.FieldDefaults,");
+                }
+            }
+            sb.AppendLine();
+
+            sb.AppendLine("/// <inheritdoc />");
+            sb.AppendLine("public bool TryGetFieldDefaults(Type type, [MaybeNullWhen(false)] out IReadOnlyDictionary<string, object?> defaults)");
+            using (sb.CurlyBrace())
+            {
+                sb.AppendLine("if (ClassOf.TryGetValue(type, out var classType) && FieldDefaultsOf.TryGetValue(classType, out var get))");
+                using (sb.CurlyBrace())
+                {
+                    sb.AppendLine("defaults = get();");
+                    sb.AppendLine("return true;");
+                }
+                sb.AppendLine("defaults = null;");
+                sb.AppendLine("return false;");
+            }
+            sb.AppendLine();
+
             sb.AppendLine("private static class Writers<TKernel, TWriteObject>");
             using (sb.IncreaseDepth())
             {
