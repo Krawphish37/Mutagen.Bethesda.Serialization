@@ -14,6 +14,7 @@ public class SerializationSourceGeneratorInitializer
     private readonly SerializationForObjectsGenerator _serializationForObjectsGenerator;
     private readonly StubGenerator _stubGenerator;
     private readonly LoquiMapper _loquiMapper;
+    private readonly RegistryGenerator _registryGenerator;
 
     public SerializationSourceGeneratorInitializer(
         BootstrapInvocationDetector invocationDetector,
@@ -23,7 +24,8 @@ public class SerializationSourceGeneratorInitializer
         ModInvocationDetector modInvocationDetector,
         SerializationForObjectsGenerator serializationForObjectsGenerator,
         StubGenerator stubGenerator,
-        LoquiMapper loquiMapper)
+        LoquiMapper loquiMapper,
+        RegistryGenerator registryGenerator)
     {
         _invocationDetector = invocationDetector;
         _mixinGenerator = mixinGenerator;
@@ -33,6 +35,7 @@ public class SerializationSourceGeneratorInitializer
         _serializationForObjectsGenerator = serializationForObjectsGenerator;
         _stubGenerator = stubGenerator;
         _loquiMapper = loquiMapper;
+        _registryGenerator = registryGenerator;
     }
     
     public void Initialize(IncrementalGeneratorInitializationContext context, bool generateMixIns)
@@ -47,6 +50,8 @@ public class SerializationSourceGeneratorInitializer
         if (generateMixIns)
         {
             _mixinGenerator.Initialize(context, modBootstraps, customizations, recordCustomizations);
+            // The public registry by runtime type is a user-facing entry point like the mix-ins (C59, W11)
+            _registryGenerator.Initialize(context, modBootstraps, mappings, customizations);
         }
         _serializationForObjectsGenerator.Initialize(context, modBootstraps, mappings, customizations, recordCustomizations);
     }

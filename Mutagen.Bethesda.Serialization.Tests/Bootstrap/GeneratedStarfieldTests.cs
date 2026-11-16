@@ -96,4 +96,29 @@ public class GeneratedStarfieldTests : IClassFixture<GeneratedStarfield>
         package.ShouldContain("case Mutagen.Bethesda.Serialization.RoundTripNoteNames.ProcedureTreeDataOrder:");
         package.ShouldContain("procedureTreeDataOrderPackage.ProcedureTreeDataOrder = procedureTreeDataOrder;");
     }
+
+    // C59 W11: one public registry for the mod, by runtime type, over the internal per-class serializers
+    [Fact]
+    public void RegistryForTheMod()
+    {
+        var registry = _gen.Get("StarfieldSerializationRegistry.g.cs");
+        registry.ShouldContain("public sealed class StarfieldSerializationRegistry : ISerializationRegistry");
+        registry.ShouldContain("[typeof(global::Mutagen.Bethesda.Starfield.Weapon)] = static (w, i, k, m) => global::Mutagen.Bethesda.Starfield.Weapon_Serialization.Serialize<TKernel, TWriteObject>(w, (global::Mutagen.Bethesda.Starfield.IWeaponGetter)i, k, m),");
+        registry.ShouldContain("[typeof(global::Mutagen.Bethesda.Starfield.Weapon)] = static (r, k, m) => SerializationRegistry.AsObject(global::Mutagen.Bethesda.Starfield.Weapon_Serialization.Deserialize<TReadObject>(r, k, m)),");
+        registry.ShouldContain("[typeof(global::Mutagen.Bethesda.Starfield.IWeaponGetter)] = typeof(global::Mutagen.Bethesda.Starfield.Weapon),");
+        // Sub-objects too; no mod, group or abstract class
+        registry.ShouldContain("[typeof(global::Mutagen.Bethesda.Starfield.PackageDataBool)] = static (w");
+        registry.ShouldNotContain("typeof(global::Mutagen.Bethesda.Starfield.StarfieldMod)");
+        registry.ShouldNotContain("typeof(global::Mutagen.Bethesda.Starfield.StarfieldMajorRecord)");
+        registry.ShouldNotContain("Group<");
+        registry.ShouldNotContain("typeof(global::Mutagen.Bethesda.Plugins.Records.MajorRecord)");
+        // Each class it lists has its generated serializer file
+        foreach (var line in registry.Split('\n').Where(l => l.Contains("_Serialization.Serialize<TKernel, TWriteObject>")))
+        {
+            var start = line.IndexOf("global::", line.IndexOf("=>")) + "global::".Length;
+            var end = line.IndexOf("_Serialization.Serialize<", start);
+            var cls = line.Substring(start, end - start);
+            _gen.Sources.ContainsKey(cls.Substring(cls.LastIndexOf('.') + 1) + "_Serializations.g.cs").ShouldBeTrue(cls);
+        }
+    }
 }

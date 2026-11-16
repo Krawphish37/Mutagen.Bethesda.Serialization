@@ -10,6 +10,7 @@ namespace Mutagen.Bethesda.Serialization.SourceGenerator.Serialization;
 [Register<StubGenerator>]
 [Register<ModInvocationDetector>]
 [Register<MixinGenerator>]
+[Register<RegistryGenerator>]
 [Register<SerializationForObjectsGenerator>]
 [Register<RelatedObjectAccumulator>]
 [Register<IsLoquiObjectTester>]
