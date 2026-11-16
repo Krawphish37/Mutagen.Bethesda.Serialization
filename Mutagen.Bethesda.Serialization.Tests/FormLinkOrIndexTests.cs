@@ -77,16 +77,31 @@ public class FormLinkOrIndexTests
         Write(back).ShouldBe(json);
     }
 
-    // An index that is null (a FormLinkOrIndex made for an alias and never given one) is left out, and reads back null
+    // A FormLinkOrIndex made for an alias and never given one has index 0 (Mutagen C68); it is written as 0
     [Fact]
-    public void NoIndex_LeftOut()
+    public void NewIndex_WrittenAsZero()
     {
         var data = new GetLineOfSightConditionData { UseAliases = true };
-        data.FirstParameter.Index.ShouldBeNull();
+        data.FirstParameter.Index.ShouldBe(0u);
         var json = Write(data);
-        json.ShouldNotContain("FirstParameter");
+        json.ShouldContain("\"FirstParameter\": 0");
         var back = Read(json);
-        back.FirstParameter.Index.ShouldBeNull();
+        back.FirstParameter.Index.ShouldBe(0u);
+        Write(back).ShouldBe(json);
+    }
+
+    // An index set to null is written as 0, as Mutagen's binary write does (C68 counts a null index as 0), and the
+    // object read back from that JSON gives the same JSON; nothing is dereferenced
+    [Fact]
+    public void NullIndex_WrittenAsZero()
+    {
+        var data = new GetLineOfSightConditionData { UseAliases = true };
+        data.FirstParameter.Index = null;
+        var json = Write(data);
+        json.ShouldContain("\"FirstParameter\": 0");
+        var back = Read(json);
+        back.FirstParameter.Index.ShouldBe(0u);
+        back.FirstParameter.Equals(data.FirstParameter).ShouldBeTrue();
         Write(back).ShouldBe(json);
     }
 }
